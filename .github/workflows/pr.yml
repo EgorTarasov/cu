@@ -1,0 +1,99 @@
+name: Pull Request
+
+on:
+    pull_request:
+        branches: [main, develop]
+
+jobs:
+    validate:
+        name: Validate Pull Request
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.25"
+
+            - name: Cache Go modules
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-pr-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-pr-
+
+            - name: Download dependencies
+              run: go mod download
+
+            - name: Verify dependencies
+              run: go mod verify
+
+            - name: Run go vet
+              run: go vet ./...
+
+            - name: Check formatting
+              run: |
+                  gofmt -l . | tee /tmp/gofmt.out
+                  test ! -s /tmp/gofmt.out || (echo "Code is not properly formatted. Run 'go fmt ./...'" && exit 1)
+
+            - name: Run tests
+              run: go test -v -race ./...
+
+            - name: Build for multiple platforms
+              run: |
+                  # Test cross-compilation
+                  GOOS=linux GOARCH=amd64 go build -o /tmp/cu-linux ./cmd/cli
+                  GOOS=darwin GOARCH=amd64 go build -o /tmp/cu-darwin ./cmd/cli
+                  GOOS=windows GOARCH=amd64 go build -o /tmp/cu-windows.exe ./cmd/cli
+                  echo "✅ Cross-compilation successful"
+
+            - name: Test CLI functionality
+              run: |
+                  go build -o cu ./cmd/cli
+                  ./cu --help
+                  ./cu fetch --help
+                  echo "✅ CLI smoke test passed"
+
+    security:
+        name: Security Scan
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.25"
+
+            - name: Install Gosec
+              run: go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+
+            - name: Run Gosec Security Scanner
+              run: gosec ./...
+
+    lint:
+        name: Lint Code
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.25"
+
+            - name: golangci-lint
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  version: latest
+                  args: --timeout=5m

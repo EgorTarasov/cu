@@ -28,4 +28,16 @@ go.work
 Thumbs.db
 
 bin/
+build/
+dist/
+
+# Application specific
+cu
+cu-*
+coverage.html
+
+# Environment files
+.env
+.env.local
+
 requests/

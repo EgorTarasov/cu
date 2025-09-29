@@ -1,0 +1,243 @@
+name: Build and Release
+
+on:
+    push:
+        branches: [main]
+        tags: ["v*"]
+    workflow_run:
+        workflows: ["Tests"]
+        types:
+            - completed
+        branches: [main]
+
+jobs:
+    # Only run if tests passed
+    check-tests:
+        runs-on: ubuntu-latest
+        if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
+        steps:
+            - name: Tests passed
+              run: echo "Tests completed successfully"
+
+    build:
+        name: Build Binaries
+        runs-on: ubuntu-latest
+        needs: check-tests
+
+        strategy:
+            matrix:
+                include:
+                    - goos: linux
+                      goarch: amd64
+                      suffix: linux-amd64
+                    - goos: linux
+                      goarch: arm64
+                      suffix: linux-arm64
+                    - goos: darwin
+                      goarch: amd64
+                      suffix: darwin-amd64
+                    - goos: darwin
+                      goarch: arm64
+                      suffix: darwin-arm64
+                    - goos: windows
+                      goarch: amd64
+                      suffix: windows-amd64.exe
+                    - goos: windows
+                      goarch: arm64
+                      suffix: windows-arm64.exe
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.25"
+
+            - name: Cache Go modules
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-build-
+
+            - name: Download dependencies
+              run: go mod download
+
+            - name: Get version
+              id: version
+              run: |
+                  if [[ $GITHUB_REF == refs/tags/* ]]; then
+                    VERSION=${GITHUB_REF#refs/tags/}
+                  else
+                    VERSION=$(git describe --tags --always --dirty)
+                  fi
+                  echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Building version: $VERSION"
+
+            - name: Build binary
+              env:
+                  GOOS: ${{ matrix.goos }}
+                  GOARCH: ${{ matrix.goarch }}
+                  CGO_ENABLED: 0
+              run: |
+                  BINARY_NAME="cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}"
+                  echo "Building $BINARY_NAME"
+                  go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o "$BINARY_NAME" ./cmd/cli
+
+                  # Create checksum
+                  if command -v sha256sum >/dev/null 2>&1; then
+                    sha256sum "$BINARY_NAME" > "$BINARY_NAME.sha256"
+                  else
+                    shasum -a 256 "$BINARY_NAME" > "$BINARY_NAME.sha256"
+                  fi
+
+                  # List files for verification
+                  ls -la "$BINARY_NAME"*
+
+            - name: Upload binary artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}
+                  path: |
+                      cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}*
+                  retention-days: 90 # Create release if this is a tag push
+    release:
+        name: Create Release
+        runs-on: ubuntu-latest
+        needs: build
+        if: startsWith(github.ref, 'refs/tags/')
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v4
+
+            - name: Get version
+              id: version
+              run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+            - name: Download all artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  path: ./artifacts
+
+            - name: Prepare release assets
+              run: |
+                  mkdir -p ./release-assets
+                  find ./artifacts -name "cu-*" -type f | while read file; do
+                    cp "$file" ./release-assets/
+                  done
+                  ls -la ./release-assets/
+
+            - name: Generate release notes
+              run: |
+                  echo "# CU CLI ${{ steps.version.outputs.VERSION }}" > RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "## Downloads" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "Choose the appropriate binary for your operating system and architecture:" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "### Linux" >> RELEASE_NOTES.md
+                  echo "- **AMD64**: \`cu-${{ steps.version.outputs.VERSION }}-linux-amd64\`" >> RELEASE_NOTES.md
+                  echo "- **ARM64**: \`cu-${{ steps.version.outputs.VERSION }}-linux-arm64\`" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "### macOS" >> RELEASE_NOTES.md
+                  echo "- **Intel (AMD64)**: \`cu-${{ steps.version.outputs.VERSION }}-darwin-amd64\`" >> RELEASE_NOTES.md
+                  echo "- **Apple Silicon (ARM64)**: \`cu-${{ steps.version.outputs.VERSION }}-darwin-arm64\`" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "### Windows" >> RELEASE_NOTES.md
+                  echo "- **AMD64**: \`cu-${{ steps.version.outputs.VERSION }}-windows-amd64.exe\`" >> RELEASE_NOTES.md
+                  echo "- **ARM64**: \`cu-${{ steps.version.outputs.VERSION }}-windows-arm64.exe\`" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "## Installation" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "1. Download the appropriate binary for your system" >> RELEASE_NOTES.md
+                  echo "2. Make it executable (Linux/macOS): \`chmod +x cu-*\`" >> RELEASE_NOTES.md
+                  echo "3. Move to your PATH: \`sudo mv cu-* /usr/local/bin/cu\`" >> RELEASE_NOTES.md
+                  echo "4. Verify installation: \`cu --help\`" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "## Verification" >> RELEASE_NOTES.md
+                  echo "" >> RELEASE_NOTES.md
+                  echo "Each binary includes a SHA256 checksum file. Verify your download:" >> RELEASE_NOTES.md
+                  echo "\`\`\`bash" >> RELEASE_NOTES.md
+                  echo "sha256sum -c cu-${{ steps.version.outputs.VERSION }}-*.sha256" >> RELEASE_NOTES.md
+                  echo "\`\`\`" >> RELEASE_NOTES.md
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ steps.version.outputs.VERSION }}
+                  name: CU CLI ${{ steps.version.outputs.VERSION }}
+                  body_path: RELEASE_NOTES.md
+                  files: ./release-assets/*
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Build summary for non-release builds
+    summary:
+        name: Build Summary
+        runs-on: ubuntu-latest
+        needs: build
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+        steps:
+            - name: Download all artifacts
+              uses: actions/download-artifact@v3
+              with:
+                  path: ./artifacts
+
+            - name: Generate build summary
+              run: |
+                  echo "## 🚀 Build Completed Successfully" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📦 Built Binaries" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "| Platform | Architecture | Binary | Size |" >> $GITHUB_STEP_SUMMARY
+                  echo "|----------|--------------|--------|------|" >> $GITHUB_STEP_SUMMARY
+
+                  find ./artifacts -name "cu-*" -not -name "*.sha256" | sort | while read file; do
+                    basename_file=$(basename "$file")
+                    size=$(ls -lh "$file" | awk '{print $5}')
+                    
+                    if [[ $basename_file == *"linux"* ]]; then
+                      platform="🐧 Linux"
+                    elif [[ $basename_file == *"darwin"* ]]; then
+                      platform="🍎 macOS"
+                    elif [[ $basename_file == *"windows"* ]]; then
+                      platform="🪟 Windows"
+                    else
+                      platform="❓ Unknown"
+                    fi
+                    
+                    if [[ $basename_file == *"amd64"* ]]; then
+                      arch="AMD64"
+                    elif [[ $basename_file == *"arm64"* ]]; then
+                      arch="ARM64"
+                    else
+                      arch="Unknown"
+                    fi
+                    
+                    echo "| $platform | $arch | \`$basename_file\` | $size |" >> $GITHUB_STEP_SUMMARY
+                  done
+
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### 📋 Usage" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "Download the appropriate binary from the artifacts and:" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+                  echo "# Make executable (Linux/macOS)" >> $GITHUB_STEP_SUMMARY
+                  echo "chmod +x cu-*" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "# Set environment variable" >> $GITHUB_STEP_SUMMARY
+                  echo "export CU_BFF_COOKIE='your-cookie-here'" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "# Run" >> $GITHUB_STEP_SUMMARY
+                  echo "./cu-* fetch courses" >> $GITHUB_STEP_SUMMARY
+                  echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

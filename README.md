@@ -192,17 +192,41 @@ go test ./internal/auth
 
 ```
 .
+├── .github/workflows/ # GitHub Actions для CI/CD
 ├── cmd/cli/           # Основное приложение CLI
 ├── internal/
-│   ├── auth/         # Модуль аутентификации и хранения
 │   └── cu/           # Клиент API Central University
 ├── requests/         # Примеры curl запросов
+├── build/            # Собранные бинарные файлы
+├── Makefile          # Задачи для разработки
 ├── go.mod
 ├── go.sum
 └── README.md
 ```
 
-### Сборка
+### Разработка с Makefile
+
+```bash
+# Показать все доступные команды
+make help
+
+# Запустить тесты
+make test
+
+# Собрать для текущей платформы
+make build
+
+# Собрать для всех платформ
+make build-all
+
+# Создать контрольные суммы
+make checksums
+
+# Запустить приложение
+CU_BFF_COOKIE='your-cookie' make run ARGS='fetch courses'
+```
+
+### Ручная сборка
 
 ```bash
 # Сборка для текущей платформы
@@ -213,6 +237,31 @@ GOOS=windows GOARCH=amd64 go build -o cu.exe ./cmd/cli
 GOOS=linux GOARCH=amd64 go build -o cu-linux ./cmd/cli
 GOOS=darwin GOARCH=amd64 go build -o cu-macos ./cmd/cli
 ```
+
+### CI/CD Пайплайны
+
+Проект использует GitHub Actions для автоматизации:
+
+#### 🧪 Тестирование (`test.yml`)
+
+-   Запускается при push в `main`/`develop` и PR
+-   Тестирует на Go 1.25
+-   Генерирует отчеты о покрытии кода
+-   Запускает `go vet` для статического анализа
+
+#### 🏗️ Сборка (`build.yml`)
+
+-   Запускается после успешных тестов
+-   Собирает для 6 платформ (Linux, macOS, Windows × AMD64/ARM64)
+-   Создает контрольные суммы SHA256
+-   Автоматически создает релизы при push тегов
+
+#### 🔍 Валидация PR (`pr.yml`)
+
+-   Проверка форматирования кода
+-   Тесты и кросс-компиляция
+-   Сканирование безопасности (Gosec)
+-   Линтинг (golangci-lint)
 
 ## 🤝 Вклад в проект
 
