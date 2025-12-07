@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 )
 
-// GetLongReadContent retrieves all materials for a longread
 func (c *Client) GetLongReadContent(ctx context.Context, longReadID int) (*MaterialsResponse, error) {
 	path := fmt.Sprintf("/api/micro-lms/longreads/%d/materials?limit=10000", longReadID)
 
@@ -31,7 +30,7 @@ func (c *Client) GetLongReadContent(ctx context.Context, longReadID int) (*Mater
 	}
 
 	var materials MaterialsResponse
-	if err := json.NewDecoder(res.Body).Decode(&materials); err != nil {
+	if err = json.NewDecoder(res.Body).Decode(&materials); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
@@ -61,7 +60,7 @@ func (c *Client) GetDownloadLink(ctx context.Context, filename, version string) 
 	}
 
 	var downloadLink DownloadLinkResponse
-	if err := json.NewDecoder(res.Body).Decode(&downloadLink); err != nil {
+	if err = json.NewDecoder(res.Body).Decode(&downloadLink); err != nil {
 		return "", fmt.Errorf("failed to decode response: %w", err)
 	}
 
@@ -93,7 +92,7 @@ func (c *Client) DownloadFile(ctx context.Context, material Material, destDir st
 		return "", fmt.Errorf("download failed with status code: %d", res.StatusCode)
 	}
 
-	if err := os.MkdirAll(destDir, 0755); err != nil {
+	if err = os.MkdirAll(destDir, 0o750); err != nil {
 		return "", fmt.Errorf("failed to create destination directory: %w", err)
 	}
 

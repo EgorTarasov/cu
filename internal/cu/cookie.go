@@ -2,6 +2,7 @@ package cu
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -12,7 +13,7 @@ func (c *Client) ValidateCookie() error {
 
 func (c *Client) ValidateCookieWithContext(ctx context.Context) error {
 	if c.bffCookie == "" {
-		return fmt.Errorf("no bff.cookie set")
+		return errors.New("no bff.cookie set")
 	}
 
 	req, err := c.prepareRequest(ctx, http.MethodGet, "/api/account/me")

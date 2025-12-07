@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"log"
 )
 
 func cookieRequiredError(err error) {
@@ -14,5 +13,5 @@ func cookieRequiredError(err error) {
 	fmt.Println("  cu fetch course 519")
 	fmt.Printf("Error details: %v\n", err)
 	fmt.Println()
-	log.Fatal("CU_BFF_COOKIE environment variable is required")
+	panic("CU_BFF_COOKIE environment variable is required")
 }

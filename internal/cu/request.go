@@ -38,7 +38,6 @@ func (c *Client) prepareRequest(ctx context.Context, method, endpoint string) (*
 	return req, nil
 }
 
-// executeRequest executes an HTTP request and returns the response
 func (c *Client) executeRequest(req *http.Request) (*http.Response, error) {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

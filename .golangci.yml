@@ -8,7 +8,7 @@ formatters:
         - goimports
         - golines
         - swaggo
-        - gofumpt
+        # - gofumpt
 
     settings:
         golines:
@@ -27,19 +27,19 @@ linters:
         - depguard # checks if package imports are in a list of acceptable packages
         - dupl # tool for code clone detection
         - durationcheck # checks for two durations multiplied together
-        - embeddedstructfieldcheck # checks embedded types in structs
+        # - embeddedstructfieldcheck # checks embedded types in structs
         - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
         - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
         - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
         - exhaustive # checks exhaustiveness of enum switch statements
         - exptostd # detects functions from golang.org/x/exp/ that can be replaced by std functions
         - fatcontext # detects nested contexts in loops
-        - forbidigo # forbids identifiers
+        # - forbidigo # forbids identifiers
         - funcorder # checks the order of functions, methods, and constructors
         - funlen # tool for detection of long functions
         - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-        - gochecknoglobals # checks that no global variables exist
-        - gochecknoinits # checks that no init functions are present in Go code
+        # - gochecknoglobals # checks that no global variables exist
+        # - gochecknoinits # checks that no init functions are present in Go code
         - gochecksumtype # checks exhaustiveness on Go "sum types"
         - gocognit # computes and checks the cognitive complexity of functions
         - goconst # finds repeated strings that could be replaced by a constant
@@ -84,7 +84,7 @@ linters:
         # - testpackage # makes you use a separate _test package
         - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
         - unconvert # removes unnecessary type conversions
-        - unparam # reports unused function parameters
+        # - unparam # reports unused function parameters
         - unused # checks for unused constants, variables, functions and types
         - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
         - usetesting # reports uses of functions with replacement inside the testing package

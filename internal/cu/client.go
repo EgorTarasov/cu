@@ -1,7 +1,7 @@
 package cu
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,7 +37,7 @@ func NewClient(bffCookie string) *Client {
 func NewClientFromEnv() (*Client, error) {
 	bffCookie := os.Getenv("CU_BFF_COOKIE")
 	if bffCookie == "" {
-		return nil, fmt.Errorf("CU_BFF_COOKIE environment variable is required")
+		return nil, errors.New("CU_BFF_COOKIE environment variable is required")
 	}
 
 	return NewClient(bffCookie), nil
@@ -53,7 +53,6 @@ func NewClientWithOptions(bffCookie string, timeout time.Duration, userAgent str
 }
 
 func (c *Client) SetBaseURL(baseURL string) {
-
 	if _, err := url.Parse(baseURL); err != nil {
 		return
 	}

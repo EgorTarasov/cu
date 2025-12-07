@@ -87,6 +87,20 @@ lint:
 	go vet ./...
 	go fmt ./...
 
+# Run gofumpt formatter
+.PHONY: gofumpt
+gofumpt:
+	@which gofumpt > /dev/null || (echo "gofumpt not found. Install it with: make install-gofumpt" && exit 1)
+	gofumpt -l -w .
+
+# Install gofumpt
+.PHONY: install-gofumpt
+install-gofumpt:
+	@echo "Installing gofumpt..."
+	@go install mvdan.cc/gofumpt@latest
+	@echo "✅ gofumpt installed successfully"
+	@gofumpt --version
+
 # Run golangci-lint (requires golangci-lint to be installed)
 .PHONY: golangci-lint
 golangci-lint:
@@ -103,7 +117,7 @@ install-golangci-lint:
 
 # Run all linting tools
 .PHONY: lint-all
-lint-all: lint golangci-lint
+lint-all: lint gofumpt golangci-lint
 
 # Run the application (requires CU_BFF_COOKIE environment variable)
 .PHONY: run
@@ -129,8 +143,10 @@ help:
 	@echo "  make deps         - Download dependencies"
 	@echo "  make install      - Install to GOPATH/bin"
 	@echo "  make lint         - Run basic linting (go vet, go fmt)"
+	@echo "  make gofumpt      - Run gofumpt formatter"
 	@echo "  make golangci-lint- Run golangci-lint"
 	@echo "  make lint-all     - Run all linting tools"
+	@echo "  make install-gofumpt - Install gofumpt"
 	@echo "  make install-golangci-lint - Install golangci-lint"
 	@echo "  make checksums    - Create checksums for all binaries"
 	@echo "  make run ARGS=... - Run the application"

@@ -3,21 +3,22 @@ package cu
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string) (*StudentCoursesResponse, error) {
 	if c.bffCookie == "" {
-		return nil, fmt.Errorf("bff.cookie is required for authentication")
+		return nil, errors.New("bff.cookie is required for authentication")
 	}
 
 	endpoint := "/api/micro-lms/courses/student"
 	params := url.Values{}
-
 	if limit > 0 {
-		params.Set("limit", fmt.Sprintf("%d", limit))
+		params.Set("limit", strconv.Itoa(limit))
 	}
 	if state != "" {
 		params.Set("state", state)
@@ -40,14 +41,14 @@ func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string)
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr APIError
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
 			return nil, fmt.Errorf("HTTP %d: failed to decode error response", resp.StatusCode)
 		}
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, apiErr.Error())
 	}
 
 	var courses StudentCoursesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&courses); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&courses); err != nil {
 		return nil, fmt.Errorf("failed to decode student courses response: %w", err)
 	}
 
@@ -56,7 +57,7 @@ func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string)
 
 func (c *Client) GetCourseOverview(ctx context.Context, courseID int) (*CourseOverview, error) {
 	if c.bffCookie == "" {
-		return nil, fmt.Errorf("bff.cookie is required for authentication")
+		return nil, errors.New("bff.cookie is required for authentication")
 	}
 
 	endpoint := fmt.Sprintf(CourseOverviewEndpoint, courseID)
@@ -74,14 +75,14 @@ func (c *Client) GetCourseOverview(ctx context.Context, courseID int) (*CourseOv
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr APIError
-		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
 			return nil, fmt.Errorf("HTTP %d: failed to decode error response", resp.StatusCode)
 		}
 		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, apiErr.Error())
 	}
 
 	var courseOverview CourseOverview
-	if err := json.NewDecoder(resp.Body).Decode(&courseOverview); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&courseOverview); err != nil {
 		return nil, fmt.Errorf("failed to decode course overview response: %w", err)
 	}
 

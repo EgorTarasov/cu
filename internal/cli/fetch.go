@@ -2,12 +2,12 @@ package cli
 
 import (
 	"context"
-	"cu-sync/internal/cu"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strconv"
 	"sync/atomic"
+
+	"cu-sync/internal/cu"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -42,7 +42,7 @@ var fetchCourseCmd = &cobra.Command{
 
 		courseID, err := strconv.Atoi(args[0])
 		if err != nil {
-			log.Fatalf("Invalid course ID '%s': %v", args[0], err)
+			panic(fmt.Sprintf("Invalid course ID '%s': %v", args[0], err))
 		}
 
 		client, err := cu.NewClientFromEnv()
@@ -50,7 +50,7 @@ var fetchCourseCmd = &cobra.Command{
 			cookieRequiredError(err)
 		}
 
-		if err := client.ValidateCookie(); err != nil {
+		if err = client.ValidateCookie(); err != nil {
 			fmt.Printf("⚠️  Cookie validation failed: %v\n", err)
 			fmt.Println("The stored cookie might be expired. Please update it.")
 			return
@@ -59,7 +59,7 @@ var fetchCourseCmd = &cobra.Command{
 		fmt.Printf("Fetching course %d...\n", courseID)
 		course, err := client.GetCourseOverview(ctx, courseID)
 		if err != nil {
-			log.Fatalf("Failed to fetch course: %v", err)
+			panic(fmt.Sprintf("Failed to fetch course: %v", err))
 		}
 
 		fmt.Println("✅ Course fetched successfully!")
@@ -139,7 +139,8 @@ var fetchCoursesCmd = &cobra.Command{
 	Use:   "courses",
 	Short: "Fetch list of student courses",
 	Long:  `Fetch the list of all student courses from Central University.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
+		const courseLimit = 10000
 		fmt.Println("📚 Fetching Student Courses")
 		fmt.Println("===========================")
 		fmt.Println()
@@ -149,16 +150,16 @@ var fetchCoursesCmd = &cobra.Command{
 			cookieRequiredError(err)
 		}
 
-		if err := client.ValidateCookie(); err != nil {
+		if err = client.ValidateCookie(); err != nil {
 			fmt.Printf("⚠️  Cookie validation failed: %v\n", err)
 			fmt.Println("The CU_BFF_COOKIE might be expired. Please update it.")
 			return
 		}
 
 		fmt.Println("Fetching all published courses...")
-		courses, err := client.GetStudentCourses(cmd.Context(), 10000, "published")
+		courses, err := client.GetStudentCourses(cmd.Context(), courseLimit, "published")
 		if err != nil {
-			log.Fatalf("Failed to fetch courses: %v", err)
+			panic(fmt.Sprintf("Failed to fetch courses: %v", err))
 		}
 
 		fmt.Printf("✅ Successfully fetched %d courses!\n", len(courses.Items))
@@ -198,9 +199,7 @@ func dumpCourse(
 	course *cu.CourseOverview,
 	courseDir string,
 ) error {
-	fmt.Println()
 	fmt.Println("📥 Downloading course materials...")
-	fmt.Println()
 
 	totalFiles := atomic.Int32{}
 	downloadedFiles := atomic.Int32{}
@@ -209,55 +208,8 @@ func dumpCourse(
 	g.SetLimit(maxConcurrentDownloads)
 
 	for _, theme := range course.Themes {
-		theme := theme // capture loop variable
 		themeDir := filepath.Join(courseDir, fmt.Sprintf("%d-%s", theme.Order, sanitizeFilename(theme.Name)))
-
-		fmt.Printf("📁 Theme: %s\n", theme.Name)
-
-		for _, longread := range theme.Longreads {
-			longread := longread // capture loop variable
-			longreadDir := filepath.Join(themeDir, sanitizeFilename(longread.Name))
-
-			fmt.Printf("  📖 Longread: %s\n", longread.Name)
-
-			materials, err := client.GetLongReadContent(gctx, longread.ID)
-			if err != nil {
-				fmt.Printf("    ⚠️  Failed to fetch materials: %v\n", err)
-				continue
-			}
-
-			fileCount := 0
-			for _, material := range materials.Items {
-				if material.Discriminator == "file" {
-					fileCount++
-				}
-			}
-
-			if fileCount == 0 {
-				fmt.Printf("    ℹ️  No files to download\n")
-				continue
-			}
-
-			totalFiles.Add(int32(fileCount))
-
-			for _, material := range materials.Items {
-				if material.Discriminator == "file" {
-					material := material
-
-					g.Go(func() error {
-						filePath, err := client.DownloadFile(gctx, material, longreadDir)
-						if err != nil {
-							fmt.Printf("    ❌ Failed to download %s: %v\n", material.Content.Name, err)
-							return nil
-						}
-
-						downloadedFiles.Add(1)
-						fmt.Printf("    ✅ Downloaded: %s\n", filepath.Base(filePath))
-						return nil
-					})
-				}
-			}
-		}
+		processTheme(gctx, client, theme, themeDir, g, &totalFiles, &downloadedFiles)
 		fmt.Println()
 	}
 
@@ -265,7 +217,106 @@ func dumpCourse(
 		return fmt.Errorf("error downloading course materials: %w", err)
 	}
 
-	fmt.Printf("✅ Download complete! %d/%d files downloaded to %s\n", downloadedFiles.Load(), totalFiles.Load(), courseDir)
+	fmt.Printf(
+		"✅ Download complete! %d/%d files downloaded to %s\n",
+		downloadedFiles.Load(),
+		totalFiles.Load(),
+		courseDir,
+	)
 	fmt.Println()
+	return nil
+}
+
+func processTheme(
+	ctx context.Context,
+	client *cu.Client,
+	theme cu.Theme,
+	themeDir string,
+	g *errgroup.Group,
+	totalFiles *atomic.Int32,
+	downloadedFiles *atomic.Int32,
+) {
+	fmt.Printf("📁 Theme: %s\n", theme.Name)
+
+	for _, longread := range theme.Longreads {
+		longreadDir := filepath.Join(themeDir, sanitizeFilename(longread.Name))
+		processLongread(ctx, client, longread, longreadDir, g, totalFiles, downloadedFiles)
+	}
+}
+
+func processLongread(
+	ctx context.Context,
+	client *cu.Client,
+	longread cu.Longread,
+	longreadDir string,
+	g *errgroup.Group,
+	totalFiles *atomic.Int32,
+	downloadedFiles *atomic.Int32,
+) {
+	fmt.Printf("  📖 Longread: %s\n", longread.Name)
+
+	materials, err := client.GetLongReadContent(ctx, longread.ID)
+	if err != nil {
+		fmt.Printf("    ⚠️  Failed to fetch materials: %v\n", err)
+		return
+	}
+
+	fileCount := countFiles(materials.Items)
+	if fileCount == 0 {
+		fmt.Printf("    ℹ️  No files to download\n")
+		return
+	}
+
+	totalFiles.Add(fileCount)
+	queueFileDownloads(ctx, materials.Items, longreadDir, g, downloadedFiles)
+}
+
+func countFiles(materials []cu.Material) int32 {
+	var count int32
+	for _, material := range materials {
+		if material.Discriminator == "file" {
+			count++
+		}
+	}
+	return count
+}
+
+func queueFileDownloads(
+	ctx context.Context,
+	materials []cu.Material,
+	longreadDir string,
+	g *errgroup.Group,
+	downloadedFiles *atomic.Int32,
+) {
+	for _, material := range materials {
+		if material.Discriminator == "file" {
+			material := material
+			g.Go(func() error {
+				return downloadMaterial(ctx, material, longreadDir, downloadedFiles)
+			})
+		}
+	}
+}
+
+func downloadMaterial(
+	ctx context.Context,
+	material cu.Material,
+	longreadDir string,
+	downloadedFiles *atomic.Int32,
+) error {
+	client, err := cu.NewClientFromEnv()
+	if err != nil {
+		fmt.Printf("    ❌ Failed to create client for %s: %v\n", material.Content.Name, err)
+		return nil
+	}
+
+	filePath, downloadErr := client.DownloadFile(ctx, material, longreadDir)
+	if downloadErr != nil {
+		fmt.Printf("    ❌ Failed to download %s: %v\n", material.Content.Name, downloadErr)
+		return nil
+	}
+
+	downloadedFiles.Add(1)
+	fmt.Printf("    ✅ Downloaded: %s\n", filepath.Base(filePath))
 	return nil
 }
