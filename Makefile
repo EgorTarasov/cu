@@ -87,6 +87,24 @@ lint:
 	go vet ./...
 	go fmt ./...
 
+# Run golangci-lint (requires golangci-lint to be installed)
+.PHONY: golangci-lint
+golangci-lint:
+	@which golangci-lint > /dev/null || (echo "golangci-lint not found. Install it with: make install-golangci-lint" && exit 1)
+	golangci-lint run --timeout=5m
+
+# Install golangci-lint
+.PHONY: install-golangci-lint
+install-golangci-lint:
+	@echo "Installing golangci-lint v2.7.2..."
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.7.2
+	@echo "✅ golangci-lint installed successfully"
+	@golangci-lint --version
+
+# Run all linting tools
+.PHONY: lint-all
+lint-all: lint golangci-lint
+
 # Run the application (requires CU_BFF_COOKIE environment variable)
 .PHONY: run
 run: build
@@ -110,7 +128,10 @@ help:
 	@echo "  make clean        - Clean build directory"
 	@echo "  make deps         - Download dependencies"
 	@echo "  make install      - Install to GOPATH/bin"
-	@echo "  make lint         - Run linting tools"
+	@echo "  make lint         - Run basic linting (go vet, go fmt)"
+	@echo "  make golangci-lint- Run golangci-lint"
+	@echo "  make lint-all     - Run all linting tools"
+	@echo "  make install-golangci-lint - Install golangci-lint"
 	@echo "  make checksums    - Create checksums for all binaries"
 	@echo "  make run ARGS=... - Run the application"
 	@echo "  make run-help     - Show application help"
