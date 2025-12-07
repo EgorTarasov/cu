@@ -31,9 +31,7 @@ bin/
 build/
 dist/
 
-# Application specific
-cu
-cu-*
+
 coverage.html
 
 # Environment files

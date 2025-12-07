@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("   ✅ Successfully retrieved %d courses\n", len(*courses))
+	fmt.Printf("   ✅ Successfully retrieved %d courseœs\n", len(*courses))
 
 	// Display course details
 	fmt.Println("\n3. Course Details:")

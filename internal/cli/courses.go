@@ -10,7 +10,7 @@ var coursesCmd = &cobra.Command{
 	Use:   "courses",
 	Short: "Sync courses (requires authentication)",
 	Long:  `Synchronizes course data from Central University. Requires valid authentication tokens.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		fmt.Println("Course synchronization - Coming soon!")
 		fmt.Println("This command will sync your course data from Central University.")
 	},
