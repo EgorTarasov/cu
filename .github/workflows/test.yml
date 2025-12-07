@@ -1,67 +1,67 @@
 name: Tests
 
 on:
-    push:
-        branches: [main, develop]
-    pull_request:
-        branches: [main]
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 jobs:
-    test:
-        name: Run Tests
-        runs-on: ubuntu-latest
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                go-version: [1.25]
+    strategy:
+      matrix:
+        go-version: [1.25]
 
-        steps:
-            - name: Check out code
-              uses: actions/checkout@v4
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
 
-            - name: Set up Go ${{ matrix.go-version }}
-              uses: actions/setup-go@v4
-              with:
-                  go-version: ${{ matrix.go-version }}
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
 
-            - name: Cache Go modules
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-                  restore-keys: |
-                      ${{ runner.os }}-go-${{ matrix.go-version }}-
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-            - name: Download dependencies
-              run: go mod download
+      - name: Download dependencies
+        run: go mod download
 
-            - name: Verify dependencies
-              run: go mod verify
+      - name: Verify dependencies
+        run: go mod verify
 
-            - name: Run go vet
-              run: go vet ./...
+      - name: Run go vet
+        run: go vet ./...
 
-            - name: Run tests
-              run: go test -v -race -coverprofile=coverage.out ./...
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
 
-            - name: Upload coverage to Codecov
-              if: matrix.go-version == '1.25'
-              uses: codecov/codecov-action@v3
-              with:
-                  file: ./coverage.out
-                  flags: unittests
-                  name: codecov-umbrella
-                  fail_ci_if_error: false
+      - name: Upload coverage to Codecov
+        if: matrix.go-version == '1.25'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
 
-            - name: Generate coverage report
-              if: matrix.go-version == '1.25'
-              run: go tool cover -html=coverage.out -o coverage.html
+      - name: Generate coverage report
+        if: matrix.go-version == '1.25'
+        run: go tool cover -html=coverage.out -o coverage.html
 
-            - name: Upload coverage report
-              if: matrix.go-version == '1.25'
-              uses: actions/upload-artifact@v3
-              with:
-                  name: coverage-report
-                  path: coverage.html
+      - name: Upload coverage report
+        if: matrix.go-version == '1.25'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.html

@@ -1,95 +1,95 @@
 name: E2E Tests
 
 on:
-    push:
-        branches: [main, develop, feature/materials]
-    pull_request:
-        branches: [main]
-    workflow_dispatch:
+  push:
+    branches: [main, develop, feature/materials]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-    e2e-fetch-dump:
-        name: E2E - Fetch and Dump Course
-        runs-on: ubuntu-latest
+  e2e-fetch-dump:
+    name: E2E - Fetch and Dump Course
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Check out code
-              uses: actions/checkout@v4
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
 
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.25"
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25"
 
-            - name: Cache Go modules
-              uses: actions/cache@v3
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/go/pkg/mod
-                  key: ${{ runner.os }}-go-e2e-${{ hashFiles('**/go.sum') }}
-                  restore-keys: |
-                      ${{ runner.os }}-go-e2e-
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-e2e-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-e2e-
 
-            - name: Download dependencies
-              run: go mod download
+      - name: Download dependencies
+        run: go mod download
 
-            - name: Build CLI
-              run: go build -o cu cmd/cli/main.go
+      - name: Build CLI
+        run: go build -o cu cmd/cli/main.go
 
-            - name: Test - Fetch course overview
-              env:
-                  CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
-              run: |
-                  echo "Testing course fetch without dump..."
-                  ./cu fetch course 526
+      - name: Test - Fetch course overview
+        env:
+          CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
+        run: |
+          echo "Testing course fetch without dump..."
+          ./cu fetch course 526
 
-            - name: Test - Dump course materials
-              env:
-                  CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
-              run: |
-                  echo "Testing course dump..."
-                  ./cu fetch course 526 --dump --path ./test-downloads
+      - name: Test - Dump course materials
+        env:
+          CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
+        run: |
+          echo "Testing course dump..."
+          ./cu fetch course 526 --dump --path ./test-downloads
 
-            - name: Verify downloaded files
-              run: |
-                  echo "Verifying download directory structure..."
+      - name: Verify downloaded files
+        run: |
+          echo "Verifying download directory structure..."
 
-                  # Check if the course directory was created
-                  if [ ! -d "./test-downloads" ]; then
-                    echo "❌ Download directory not created"
-                    exit 1
-                  fi
+          # Check if the course directory was created
+          if [ ! -d "./test-downloads" ]; then
+            echo "❌ Download directory not created"
+            exit 1
+          fi
 
-                  # List directory structure
-                  echo "📂 Directory structure:"
-                  ls -lR ./test-downloads
+          # List directory structure
+          echo "📂 Directory structure:"
+          ls -lR ./test-downloads
 
-                  # Count downloaded files
-                  file_count=$(find ./test-downloads -type f | wc -l)
-                  echo "📊 Total files downloaded: $file_count"
+          # Count downloaded files
+          file_count=$(find ./test-downloads -type f | wc -l)
+          echo "📊 Total files downloaded: $file_count"
 
-                  if [ "$file_count" -eq 0 ]; then
-                    echo "⚠️  Warning: No files were downloaded"
-                  else
-                    echo "✅ Files downloaded successfully"
-                  fi
+          if [ "$file_count" -eq 0 ]; then
+            echo "⚠️  Warning: No files were downloaded"
+          else
+            echo "✅ Files downloaded successfully"
+          fi
 
-            - name: Test - Fetch student courses
-              env:
-                  CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
-              run: |
-                  echo "Testing student courses fetch..."
-                  ./cu fetch courses
+      - name: Test - Fetch student courses
+        env:
+          CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
+        run: |
+          echo "Testing student courses fetch..."
+          ./cu fetch courses
 
-            - name: Upload download artifacts
-              if: always()
-              uses: actions/upload-artifact@v3
-              with:
-                  name: course-526-materials
-                  path: ./test-downloads
-                  retention-days: 7
+      - name: Upload download artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: course-526-materials
+          path: ./test-downloads
+          retention-days: 7
 
-            - name: Cleanup
-              if: always()
-              run: rm -rf ./test-downloads
+      - name: Cleanup
+        if: always()
+        run: rm -rf ./test-downloads
