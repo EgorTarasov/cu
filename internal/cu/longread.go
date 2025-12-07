@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 )
 
-
 // GetLongReadContent retrieves all materials for a longread
 func (c *Client) GetLongReadContent(ctx context.Context, longReadID int) (*MaterialsResponse, error) {
 	path := fmt.Sprintf("/api/micro-lms/longreads/%d/materials?limit=10000", longReadID)
