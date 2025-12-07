@@ -17,6 +17,10 @@ type ClientTestSuite struct {
 	bffCookie  string
 }
 
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
+}
+
 func (s *ClientTestSuite) SetupSuite() {
 	s.bffCookie = "test-cookie-value-123"
 }
@@ -173,7 +177,8 @@ func (s *ClientTestSuite) TestSetBffCookie() {
 }
 
 func (s *ClientTestSuite) TestGetCourseOverview_Success() {
-	courseOverview, err := s.client.GetCourseOverview(519)
+	ctx := s.T().Context()
+	courseOverview, err := s.client.GetCourseOverview(ctx, 519)
 	s.NoError(err)
 	s.NotNil(courseOverview)
 	s.Equal(519, courseOverview.ID)
@@ -185,19 +190,21 @@ func (s *ClientTestSuite) TestGetCourseOverview_Success() {
 }
 
 func (s *ClientTestSuite) TestGetCourseOverview_NoCookie() {
+	ctx := s.T().Context()
 	client := NewClient("")
 	client.SetBaseURL(s.testServer.URL)
 
-	_, err := client.GetCourseOverview(519)
+	_, err := client.GetCourseOverview(ctx, 519)
 	s.Error(err)
 	s.Contains(err.Error(), "bff.cookie is required")
 }
 
 func (s *ClientTestSuite) TestGetCourseOverview_InvalidCookie() {
+	ctx := s.T().Context()
 	client := NewClient("invalid-cookie")
 	client.SetBaseURL(s.testServer.URL)
 
-	_, err := client.GetCourseOverview(519)
+	_, err := client.GetCourseOverview(ctx, 519)
 	s.Error(err)
 	s.Contains(err.Error(), "HTTP 401")
 }
@@ -225,7 +232,8 @@ func (s *ClientTestSuite) TestValidateCookie_NoCookie() {
 }
 
 func (s *ClientTestSuite) TestGetStudentCourses_Success() {
-	courses, err := s.client.GetStudentCourses(10000, "published")
+	ctx := s.T().Context()
+	courses, err := s.client.GetStudentCourses(ctx, 10000, "published")
 	s.NoError(err)
 	s.NotNil(courses)
 	s.Len(courses.Items, 2)
@@ -237,7 +245,8 @@ func (s *ClientTestSuite) TestGetStudentCourses_Success() {
 }
 
 func (s *ClientTestSuite) TestGetStudentCourses_WithLimit() {
-	courses, err := s.client.GetStudentCourses(1, "published")
+	ctx := s.T().Context()
+	courses, err := s.client.GetStudentCourses(ctx, 1, "published")
 	s.NoError(err)
 	s.NotNil(courses)
 	s.Len(courses.Items, 1)
@@ -246,7 +255,8 @@ func (s *ClientTestSuite) TestGetStudentCourses_WithLimit() {
 }
 
 func (s *ClientTestSuite) TestGetStudentCourses_NoParameters() {
-	courses, err := s.client.GetStudentCourses(0, "")
+	ctx := s.T().Context()
+	courses, err := s.client.GetStudentCourses(ctx, 0, "")
 	s.NoError(err)
 	s.NotNil(courses)
 	s.Len(courses.Items, 2)
@@ -256,8 +266,9 @@ func (s *ClientTestSuite) TestGetStudentCourses_NoParameters() {
 func (s *ClientTestSuite) TestGetStudentCourses_NoCookie() {
 	client := NewClient("")
 	client.SetBaseURL(s.testServer.URL)
+	ctx := s.T().Context()
 
-	_, err := client.GetStudentCourses(10000, "published")
+	_, err := client.GetStudentCourses(ctx, 10000, "published")
 	s.Error(err)
 	s.Contains(err.Error(), "bff.cookie is required")
 }
@@ -266,11 +277,8 @@ func (s *ClientTestSuite) TestGetStudentCourses_InvalidCookie() {
 	client := NewClient("invalid-cookie")
 	client.SetBaseURL(s.testServer.URL)
 
-	_, err := client.GetStudentCourses(10000, "published")
+	ctx := s.T().Context()
+	_, err := client.GetStudentCourses(ctx, 10000, "published")
 	s.Error(err)
 	s.Contains(err.Error(), "HTTP 401")
-}
-
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
 }

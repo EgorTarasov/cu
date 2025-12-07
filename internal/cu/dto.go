@@ -91,6 +91,44 @@ type CoursesListResponse struct {
 	Total   int              `json:"total"`
 }
 
+// Material represents a material item in a longread
+type Material struct {
+	Discriminator string       `json:"discriminator"`
+	ViewContent   string       `json:"viewContent,omitempty"`
+	ViewType      string       `json:"viewType,omitempty"`
+	MediaType     string       `json:"mediaType,omitempty"`
+	Filename      string       `json:"filename,omitempty"`
+	Version       string       `json:"version,omitempty"`
+	Length        int          `json:"length,omitempty"`
+	State         string       `json:"state"`
+	PublishDate   *time.Time   `json:"publishDate"`
+	PublishedAt   *time.Time   `json:"publishedAt"`
+	Content       *FileContent `json:"content,omitempty"`
+	Type          string       `json:"type"`
+	ID            int          `json:"id"`
+	Order         int          `json:"order"`
+}
+
+// FileContent represents file content information
+type FileContent struct {
+	Name      string `json:"name"`
+	Filename  string `json:"filename"`
+	MediaType string `json:"mediaType"`
+	Version   string `json:"version"`
+	Length    int    `json:"length"`
+}
+
+// MaterialsResponse represents the response from /api/micro-lms/longreads/{id}/materials
+type MaterialsResponse struct {
+	Items  []Material `json:"items"`
+	Paging Paging     `json:"paging"`
+}
+
+// DownloadLinkResponse represents the response from /api/micro-lms/content/download-link
+type DownloadLinkResponse struct {
+	URL string `json:"url"`
+}
+
 // APIError represents an API error response
 type APIError struct {
 	Message string `json:"message"`
