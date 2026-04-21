@@ -411,6 +411,10 @@ linters:
             - text: 'comment on exported \S+ \S+ should be of the form ".+"'
               source: "// ?(nolint|TODO)"
               linters: [revive, staticcheck]
+            - path: 'internal/mcp/'
+              linters:
+                  - golines
+                  - gocognit
             - path: '_test\.go'
               linters:
                   - bodyclose
