@@ -11,6 +11,12 @@ import (
 	"cu-sync/internal/cu"
 )
 
+const (
+	hoursPerDay     = 24
+	minutesPerHour  = 60
+	maxCoursesLimit = 10000
+)
+
 // mustClient creates an authenticated client or exits.
 func mustClient() *cu.Client {
 	client, err := cu.NewClientFromEnv()
@@ -40,13 +46,13 @@ func formatTimeLeft(t time.Time) string {
 	if d < 0 {
 		return "OVERDUE"
 	}
-	days := int(d.Hours() / 24)
-	hours := int(math.Mod(d.Hours(), 24))
+	days := int(d.Hours() / hoursPerDay)
+	hours := int(math.Mod(d.Hours(), hoursPerDay))
 	if days > 0 {
 		return fmt.Sprintf("%dd %dh", days, hours)
 	}
 	if hours > 0 {
-		return fmt.Sprintf("%dh %dm", hours, int(math.Mod(d.Minutes(), 60)))
+		return fmt.Sprintf("%dh %dm", hours, int(math.Mod(d.Minutes(), minutesPerHour)))
 	}
 	return fmt.Sprintf("%dm", int(d.Minutes()))
 }

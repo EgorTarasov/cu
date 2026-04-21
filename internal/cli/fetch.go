@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"cu-sync/internal/cu"
-
 	"github.com/spf13/cobra"
 )
 
@@ -81,7 +79,7 @@ var fetchCoursesCmd = &cobra.Command{
 		ctx := cmd.Context()
 		client := mustClient()
 
-		courses, err := client.GetStudentCourses(ctx, 10000, "published")
+		courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
 		if err != nil {
 			fmt.Printf("Failed to fetch courses: %v\n", err)
 			return
@@ -105,10 +103,4 @@ var fetchCoursesCmd = &cobra.Command{
 			fmt.Println()
 		}
 	},
-}
-
-// clientForDownload creates a new client instance for concurrent downloads.
-func clientForDownload() *cu.Client {
-	client, _ := cu.NewClientFromEnv()
-	return client
 }

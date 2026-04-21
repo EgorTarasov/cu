@@ -16,7 +16,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const defaultMaxDownloads = 10
+const (
+	defaultMaxDownloads = 10
+	bytesPerKB          = 1024
+	minWeekMatchParts   = 2
+)
 
 func init() {
 	materialsCmd.Flags().Int("week", 0, "download only a specific week number")
@@ -44,6 +48,14 @@ Examples:
 		weekFilter, _ := cmd.Flags().GetInt("week")
 		linksOnly, _ := cmd.Flags().GetBool("links")
 		basePath, _ := cmd.Flags().GetString("path")
+
+		// Try to create GitLab client (optional — will skip git downloads if unavailable).
+		gitlabClient, gitlabErr := cu.NewGitLabClientFromEnv()
+		if gitlabErr != nil && !linksOnly {
+			fmt.Println("GitLab not configured — git.culab.ru links will be shown but not downloaded.")
+			fmt.Println("Run 'cu login --gitlab' to enable.")
+			fmt.Println()
+		}
 
 		fmt.Printf("Materials: %s\n\n", courseName)
 
@@ -83,7 +95,7 @@ Examples:
 					switch {
 					case mat.Discriminator == "file" && mat.Content != nil:
 						if linksOnly {
-							fmt.Printf("  [PDF] %s (%.1f KB)\n", mat.Content.Name, float64(mat.Length)/1024)
+							fmt.Printf("  [PDF] %s (%.1f KB)\n", mat.Content.Name, float64(mat.Length)/bytesPerKB)
 						} else {
 							totalFiles.Add(1)
 							themeDir := filepath.Join(basePath, sanitizeFilename(courseName),
@@ -109,8 +121,27 @@ Examples:
 
 					case mat.Type == "markdown" && mat.ViewContent != "":
 						links := extractLinks(mat.ViewContent)
+						themeDir := filepath.Join(basePath, sanitizeFilename(courseName),
+							fmt.Sprintf("%02d-%s", theme.Order, sanitizeFilename(theme.Name)))
 						for _, link := range links {
-							fmt.Printf("  [link] %s\n", link)
+							if !linksOnly && gitlabClient != nil && cu.IsGitLabLink(link) {
+								totalFiles.Add(1)
+								link := link
+								g.Go(func() error {
+									saved, err := gitlabClient.DownloadGitLabLink(ctx, link, themeDir)
+									if err != nil {
+										fmt.Fprintf(os.Stderr, "  failed: %s: %v\n", link, err)
+										return nil
+									}
+									for _, s := range saved {
+										downloaded.Add(1)
+										fmt.Printf("  saved: %s\n", filepath.Base(s))
+									}
+									return nil
+								})
+							} else {
+								fmt.Printf("  [link] %s\n", link)
+							}
 						}
 					}
 				}
@@ -131,7 +162,7 @@ var weekPattern = regexp.MustCompile(`(?i)(?:неделя|week)\s*(\d+)`)
 
 func matchesWeek(themeName string, week int) bool {
 	matches := weekPattern.FindStringSubmatch(themeName)
-	if len(matches) < 2 {
+	if len(matches) < minWeekMatchParts {
 		return false
 	}
 	n, err := strconv.Atoi(matches[1])
@@ -222,10 +253,10 @@ func processLongread(
 			continue
 		}
 		totalFiles.Add(1)
-		material := material
 		g.Go(func() error {
 			dlClient, err := cu.NewClientFromEnv()
 			if err != nil {
+				fmt.Fprintf(os.Stderr, "  failed to create client: %v\n", err)
 				return nil
 			}
 			_, err = dlClient.DownloadFile(ctx, material, longreadDir)

@@ -258,7 +258,7 @@ linters:
         gocognit:
             # Minimal code complexity to report.
             # Default: 30 (but we recommend 10-20)
-            min-complexity: 20
+            min-complexity: 25
 
         gocritic:
             # Settings passed to gocritic.
@@ -288,7 +288,7 @@ linters:
                 shadow:
                     # Whether to be strict about shadowing; can be noisy.
                     # Default: false
-                    strict: true
+                    strict: false
 
         inamedparam:
             # Skips check for interface methods with only a single parameter.

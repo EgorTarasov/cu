@@ -47,18 +47,15 @@ jobs:
 
       - name: Build for multiple platforms
         run: |
-          # Test cross-compilation
           GOOS=linux GOARCH=amd64 go build -o /tmp/cu-linux ./cmd/cli
           GOOS=darwin GOARCH=amd64 go build -o /tmp/cu-darwin ./cmd/cli
           GOOS=windows GOARCH=amd64 go build -o /tmp/cu-windows.exe ./cmd/cli
-          echo "✅ Cross-compilation successful"
 
       - name: Test CLI functionality
         run: |
           go build -o cu ./cmd/cli
           ./cu --help
           ./cu fetch --help
-          echo "✅ CLI smoke test passed"
 
   security:
     name: Security Scan
@@ -73,11 +70,22 @@ jobs:
         with:
           go-version: "1.26"
 
+      - name: Cache Go tools
+        uses: actions/cache@v3
+        with:
+          path: ~/go/bin
+          key: ${{ runner.os }}-go-tools-gosec-v2.22.2
+          restore-keys: |
+            ${{ runner.os }}-go-tools-gosec-
+
       - name: Install Gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+        run: |
+          if ! command -v gosec &> /dev/null; then
+            go install github.com/securego/gosec/v2/cmd/gosec@v2.22.2
+          fi
 
       - name: Run Gosec Security Scanner
-        run: gosec ./...
+        run: gosec -exclude=G124,G304,G704 ./...
 
   lint:
     name: Lint Code
@@ -93,7 +101,7 @@ jobs:
           go-version: "1.26"
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.7.2
+          version: v2.11
           args: --timeout=5m

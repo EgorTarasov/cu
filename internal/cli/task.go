@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const taskPercentMultiplier = 100
+
 var taskCmd = &cobra.Command{
 	Use:   "task <task-id>",
 	Short: "Show task details",
@@ -44,7 +46,9 @@ Examples:
 		} else {
 			fmt.Printf("Score:    -/%d\n", task.Exercise.MaxScore)
 		}
-		fmt.Printf("Activity: %s (%.0f%%)\n", task.Exercise.Activity.Name, task.Exercise.Activity.Weight*100)
+		fmt.Printf("Activity: %s (%.0f%%)\n",
+			task.Exercise.Activity.Name,
+			task.Exercise.Activity.Weight*taskPercentMultiplier)
 		fmt.Println()
 
 		fmt.Printf("Deadline: %s (%s left)\n",
