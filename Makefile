@@ -86,6 +86,7 @@ checksums: build-all
 lint:
 	go vet ./...
 	go fmt ./...
+	golangci-lint run --timeout=5m
 
 # Run gofumpt formatter
 .PHONY: gofumpt

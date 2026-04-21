@@ -62,9 +62,23 @@ func NewClientWithOptions(bffCookie string, timeout time.Duration, userAgent str
 	return client
 }
 
-func (c *Client) SetBaseURL(baseURL string) {
-	if _, err := url.Parse(baseURL); err != nil {
-		return
+var allowedHosts = map[string]bool{
+	"my.centraluniversity.ru": true,
+	"git.culab.ru":            true,
+}
+
+// SetBaseURL sets the base URL after validating it against the allowed hosts.
+// Returns false if the URL is invalid or the host is not in the allowlist.
+func (c *Client) SetBaseURL(baseURL string) bool {
+	u, err := url.Parse(baseURL)
+	if err != nil || !allowedHosts[u.Hostname()] {
+		return false
 	}
+	c.baseURL = baseURL
+	return true
+}
+
+// setBaseURL sets the base URL without host validation (used in tests).
+func (c *Client) setBaseURL(baseURL string) {
 	c.baseURL = baseURL
 }

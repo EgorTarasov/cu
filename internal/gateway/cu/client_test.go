@@ -53,7 +53,7 @@ func (s *ClientTestSuite) SetupTest() {
 	}))
 
 	s.client = NewClient(s.bffCookie)
-	s.client.SetBaseURL(s.testServer.URL)
+	s.client.setBaseURL(s.testServer.URL)
 }
 
 func (s *ClientTestSuite) TearDownTest() {
@@ -189,7 +189,7 @@ func (s *ClientTestSuite) TestGetCourseOverview_Success() {
 func (s *ClientTestSuite) TestGetCourseOverview_NoCookie() {
 	ctx := s.T().Context()
 	client := NewClient("")
-	client.SetBaseURL(s.testServer.URL)
+	client.setBaseURL(s.testServer.URL)
 
 	_, err := client.GetCourseOverview(ctx, 519)
 	s.Require().Error(err)
@@ -199,7 +199,7 @@ func (s *ClientTestSuite) TestGetCourseOverview_NoCookie() {
 func (s *ClientTestSuite) TestGetCourseOverview_InvalidCookie() {
 	ctx := s.T().Context()
 	client := NewClient("invalid-cookie")
-	client.SetBaseURL(s.testServer.URL)
+	client.setBaseURL(s.testServer.URL)
 
 	_, err := client.GetCourseOverview(ctx, 519)
 	s.Require().Error(err)
@@ -213,7 +213,7 @@ func (s *ClientTestSuite) TestValidateCookie_Valid() {
 
 func (s *ClientTestSuite) TestValidateCookie_Invalid() {
 	client := NewClient("invalid-cookie")
-	client.SetBaseURL(s.testServer.URL)
+	client.setBaseURL(s.testServer.URL)
 
 	err := client.ValidateCookie()
 	s.Require().Error(err)
@@ -262,7 +262,7 @@ func (s *ClientTestSuite) TestGetStudentCourses_NoParameters() {
 
 func (s *ClientTestSuite) TestGetStudentCourses_NoCookie() {
 	client := NewClient("")
-	client.SetBaseURL(s.testServer.URL)
+	client.setBaseURL(s.testServer.URL)
 	ctx := s.T().Context()
 
 	_, err := client.GetStudentCourses(ctx, 10000, "published")
@@ -272,7 +272,7 @@ func (s *ClientTestSuite) TestGetStudentCourses_NoCookie() {
 
 func (s *ClientTestSuite) TestGetStudentCourses_InvalidCookie() {
 	client := NewClient("invalid-cookie")
-	client.SetBaseURL(s.testServer.URL)
+	client.setBaseURL(s.testServer.URL)
 
 	ctx := s.T().Context()
 	_, err := client.GetStudentCourses(ctx, 10000, "published")
