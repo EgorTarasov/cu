@@ -20,7 +20,7 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	Course string `json:"course,omitempty" jsonschema:"description=Course name or ID (optional — omit for all courses)"`
+	Course string `json:"course,omitempty" jsonschema:"Course name or ID (optional — omit for all courses)"`
 }
 
 // Definition is the MCP tool definition.

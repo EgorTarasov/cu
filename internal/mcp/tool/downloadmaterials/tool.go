@@ -27,9 +27,9 @@ type GitLabClient interface {
 
 // Input for the tool.
 type Input struct {
-	Course string `json:"course" jsonschema:"description=Course name or ID"`
-	Week   int    `json:"week,omitempty" jsonschema:"description=Week number (optional)"`
-	Path   string `json:"path" jsonschema:"description=Directory to save files to"`
+	Course string `json:"course" jsonschema:"Course name or ID"`
+	Week   int    `json:"week,omitempty" jsonschema:"Week number (optional)"`
+	Path   string `json:"path" jsonschema:"Directory to save files to"`
 }
 
 // Definition is the MCP tool definition.

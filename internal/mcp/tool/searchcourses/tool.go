@@ -20,7 +20,7 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	Query string `json:"query" jsonschema:"description=Search query (case-insensitive substring match)"`
+	Query string `json:"query" jsonschema:"Search query (case-insensitive substring match)"`
 }
 
 // Definition is the MCP tool definition.

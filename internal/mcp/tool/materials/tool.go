@@ -21,8 +21,8 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	Course string `json:"course" jsonschema:"description=Course name or ID"`
-	Week   int    `json:"week,omitempty" jsonschema:"description=Week number (optional — omit for all weeks)"`
+	Course string `json:"course" jsonschema:"Course name or ID"`
+	Week   int    `json:"week,omitempty" jsonschema:"Week number (optional — omit for all weeks)"`
 }
 
 // Definition is the MCP tool definition.
