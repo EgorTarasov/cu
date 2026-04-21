@@ -17,7 +17,7 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	TaskID int `json:"task_id" jsonschema:"description=Task ID (found in deadlines or grades output)"`
+	TaskID int `json:"task_id" jsonschema:"Task ID (found in deadlines or grades output)"`
 }
 
 // Definition is the MCP tool definition.

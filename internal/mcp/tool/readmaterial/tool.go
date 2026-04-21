@@ -26,9 +26,9 @@ type GitLabClient interface {
 
 // Input for the tool.
 type Input struct {
-	Course string `json:"course" jsonschema:"description=Course name or ID"`
-	Week   int    `json:"week" jsonschema:"description=Week number"`
-	Type   string `json:"type,omitempty" jsonschema:"description=Material type: longread or seminar (optional — returns all markdown links)"`
+	Course string `json:"course" jsonschema:"Course name or ID"`
+	Week   int    `json:"week" jsonschema:"Week number"`
+	Type   string `json:"type,omitempty" jsonschema:"Material type: longread or seminar (optional — returns all markdown links)"`
 }
 
 // Definition is the MCP tool definition.
