@@ -60,87 +60,33 @@ export CU_BFF_COOKIE="ваше-значение-cookie"
 
 > Переменная окружения `CU_BFF_COOKIE` имеет приоритет над сохранённым файлом.
 
-## Использование
+## Команды
 
-### Основные команды
+| Команда | Описание | Документация |
+|---------|----------|--------------|
+| `cu login` | Авторизация через браузер | [docs/login.md](docs/login.md) |
+| `cu courses` | Список курсов с ID | [docs/courses.md](docs/courses.md) |
+| `cu deadlines [course]` | Ближайшие дедлайны | [docs/deadlines.md](docs/deadlines.md) |
+| `cu grades [course]` | Оценки и ведомость | [docs/grades.md](docs/grades.md) |
+| `cu materials <course>` | Скачать PDF и ссылки на материалы | [docs/materials.md](docs/materials.md) |
+| `cu task <id>` | Детали задания | [docs/task.md](docs/task.md) |
 
-```bash
-# Показать справку
-cu --help
+Курс можно указать по **ID** (`901`) или по **названию** (`go`, `sql`, `алгоритмы`) — поиск регистронезависимый.
 
-# Авторизация через браузер
-cu login
-
-# Список всех доступных курсов
-cu fetch courses
-
-# Получить детальную информацию о курсе
-cu fetch course 519
-
-# Скачать материалы курса
-cu fetch course 519 --dump --path ./materials
-```
-
-### Примеры вывода
-
-#### Список курсов
+### Быстрый пример
 
 ```bash
-$ cu fetch courses
+# Что горит?
+cu deadlines
 
-Fetching Student Courses
-===========================
+# Оценки по Go
+cu grades go
 
-Successfully fetched 5 courses!
-Total available: 5 courses
+# Скачать все лекции и семинары
+cu materials алгоритмы --path ./downloads
 
-1. Case Evenings (ID: 519)
-   State: published | Archived: false
-   Published: 2025-09-01 07:00:18
-
-2. Java Core (ID: 526)
-   State: published | Archived: false
-   Published: 2025-09-01 07:00:19
-
-...
-```
-
-#### Детальная информация о курсе
-
-```bash
-$ cu fetch course 519
-
-Fetching Course Overview
-===========================
-
-Course fetched successfully!
-
-Course: Case Evenings (ID: 519)
-State: published
-Archived: false
-Publish Date: 2025-09-01 07:00:00
-Themes: 4
-  1. Силлабус (ID: 4399)
-     Longreads: 1
-       - Ссылка на силлабус (common)
-  ...
-```
-
-## Структура команд
-
-```
-cu
-├── login             # Авторизация через браузер
-├── fetch             # Получение данных
-│   ├── courses       # Список всех курсов студента
-│   └── course [ID]   # Детальная информация о курсе
-├── storage           # Управление хранилищем (в разработке)
-│   ├── init         # Инициализация хранилища
-│   ├── unseal       # Разблокировка хранилища
-│   ├── seal         # Блокировка хранилища
-│   ├── status       # Статус хранилища
-│   └── clear        # Очистка хранилища
-└── courses           # Синхронизация курсов (в разработке)
+# Подробности по заданию
+cu task 1536681
 ```
 
 ## Переменные окружения
@@ -268,11 +214,12 @@ GOOS=darwin GOARCH=amd64 go build -o cu-macos ./cmd/cli
 
 ## Roadmap
 
-- [x] Получение списка курсов
-- [x] Детальная информация о курсе
-- [x] Валидация аутентификации
 - [x] Авторизация через браузер (chromedp)
-- [ ] Синхронизация курсов
-- [ ] Экспорт данных в различные форматы
+- [x] Получение списка курсов
+- [x] Скачивание PDF-материалов
+- [x] Просмотр дедлайнов
+- [x] Просмотр оценок и ведомости
+- [x] Поиск курса по названию
+- [ ] Скачивание лонгридов с GitLab
 - [ ] Интерактивный режим
-- [ ] Конфигурационные файлы
+- [ ] Уведомления о приближающихся дедлайнах
