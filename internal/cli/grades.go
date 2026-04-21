@@ -3,8 +3,15 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+)
+
+const (
+	percentMultiplier   = 100
+	gradeNameWidth      = 50
+	gradeProgressBarLen = 20
 )
 
 var gradesCmd = &cobra.Command{
@@ -24,22 +31,23 @@ Examples:
 
 		if len(args) == 0 {
 			// Summary across all courses.
-			courses, err := client.GetStudentCourses(ctx, 10000, "published")
+			courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to fetch courses: %v\n", err)
 				return
 			}
 
-			fmt.Println("Grades summary\n")
+			fmt.Println("Grades summary")
+			fmt.Println()
 			for _, course := range courses.Items {
 				progress, err := client.GetCourseProgress(ctx, course.ID)
 				if err != nil {
 					fmt.Printf("  %-50s  (error)\n", course.Name)
 					continue
 				}
-				bar := progressBar(progress.EarnedScore, progress.MaxScore, 20)
+				bar := progressBar(progress.EarnedScore, progress.MaxScore, gradeProgressBarLen)
 				fmt.Printf("  %-50s  %s %.1f/%.0f\n",
-					truncate(course.Name, 50),
+					truncate(course.Name, gradeNameWidth),
 					bar,
 					progress.EarnedScore,
 					progress.MaxScore,
@@ -68,7 +76,7 @@ Examples:
 			}
 			weight := ""
 			if item.Activity.Weight > 0 {
-				weight = fmt.Sprintf(" (%.0f%%)", item.Activity.Weight*100)
+				weight = fmt.Sprintf(" (%.0f%%)", item.Activity.Weight*percentMultiplier)
 			}
 			fmt.Printf("  %-35s  avg=%.1f  total=%.1f%s%s\n",
 				item.Activity.Name+weight,
@@ -125,23 +133,15 @@ Examples:
 	},
 }
 
-func progressBar(value, max float64, width int) string {
-	if max == 0 {
-		return "[" + repeat("-", width) + "]"
+func progressBar(value, maxVal float64, width int) string {
+	if maxVal == 0 {
+		return "[" + strings.Repeat("-", width) + "]"
 	}
-	filled := int(value / max * float64(width))
+	filled := int(value / maxVal * float64(width))
 	if filled > width {
 		filled = width
 	}
-	return "[" + repeat("#", filled) + repeat("-", width-filled) + "]"
-}
-
-func repeat(s string, n int) string {
-	result := ""
-	for i := 0; i < n; i++ {
-		result += s
-	}
-	return result
+	return "[" + strings.Repeat("#", filled) + strings.Repeat("-", width-filled) + "]"
 }
 
 func truncate(s string, n int) string {

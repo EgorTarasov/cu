@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	BaseURL = "https://my.centraluniversity.ru"
+	BaseURL       = "https://my.centraluniversity.ru"
+	GitLabBaseURL = "https://git.culab.ru"
 
 	CourseOverviewEndpoint = "/api/micro-lms/courses/%d/overview"
 
@@ -31,7 +32,8 @@ func NewClient(bffCookie string) *Client {
 		},
 		baseURL:   BaseURL,
 		bffCookie: bffCookie,
-		userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+		userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
 	}
 }
 

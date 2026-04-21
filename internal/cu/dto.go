@@ -4,14 +4,14 @@ import "time"
 
 // CourseOverview represents the complete course overview response.
 type CourseOverview struct {
-	ID          int            `json:"id"`
-	Name        string         `json:"name"`
-	IsArchived  bool           `json:"isArchived"`
-	State       string         `json:"state"`
 	PublishDate *time.Time     `json:"publishDate"`
 	PublishedAt *time.Time     `json:"publishedAt"`
 	Settings    CourseSettings `json:"settings"`
 	Themes      []Theme        `json:"themes"`
+	Name        string         `json:"name"`
+	State       string         `json:"state"`
+	ID          int            `json:"id"`
+	IsArchived  bool           `json:"isArchived"`
 }
 
 // CourseSettings represents course configuration settings.
@@ -22,47 +22,47 @@ type CourseSettings struct {
 
 // Theme represents a course theme/module.
 type Theme struct {
-	ID          int        `json:"id"`
-	Name        string     `json:"name"`
-	Order       int        `json:"order"`
-	State       string     `json:"state"`
 	PublishDate *time.Time `json:"publishDate"`
 	PublishedAt *time.Time `json:"publishedAt"`
 	Longreads   []Longread `json:"longreads"`
+	Name        string     `json:"name"`
+	State       string     `json:"state"`
+	ID          int        `json:"id"`
+	Order       int        `json:"order"`
 }
 
 // Longread represents a learning material within a theme.
 type Longread struct {
-	ID          int        `json:"id"`
-	Type        string     `json:"type"`
-	Name        string     `json:"name"`
-	State       string     `json:"state"`
 	PublishDate *time.Time `json:"publishDate"`
 	PublishedAt *time.Time `json:"publishedAt"`
 	Exercises   []Exercise `json:"exercises"`
+	Type        string     `json:"type"`
+	Name        string     `json:"name"`
+	State       string     `json:"state"`
+	ID          int        `json:"id"`
 }
 
 // Exercise represents an exercise within a longread.
 type Exercise struct {
-	ID       int          `json:"id"`
-	Name     string       `json:"name"`
-	MaxScore int          `json:"maxScore"`
 	Activity *ActivityRef `json:"activity,omitempty"`
 	Deadline *time.Time   `json:"deadline,omitempty"`
+	Name     string       `json:"name"`
+	ID       int          `json:"id"`
+	MaxScore int          `json:"maxScore"`
 }
 
 // StudentCourse represents a course in the student courses list.
 type StudentCourse struct {
-	ID          int            `json:"id"`
-	Name        string         `json:"name"`
-	State       string         `json:"state"`
-	IsArchived  bool           `json:"isArchived"`
 	PublishDate *time.Time     `json:"publishDate"`
 	PublishedAt *time.Time     `json:"publishedAt"`
-	Settings    CourseSettings `json:"settings"`
 	SubjectID   *int           `json:"subjectId"`
-	Category    string         `json:"category"`
 	Progress    *Progress      `json:"progress,omitempty"`
+	Settings    CourseSettings `json:"settings"`
+	Name        string         `json:"name"`
+	State       string         `json:"state"`
+	Category    string         `json:"category"`
+	ID          int            `json:"id"`
+	IsArchived  bool           `json:"isArchived"`
 }
 
 // Progress represents course progress information.
@@ -87,22 +87,22 @@ type StudentCoursesResponse struct {
 
 // Material represents a material item in a longread.
 type Material struct {
+	PublishDate   *time.Time   `json:"publishDate"`
+	PublishedAt   *time.Time   `json:"publishedAt"`
+	Content       *FileContent `json:"content,omitempty"`
+	TaskID        *int         `json:"taskId,omitempty"`
 	Discriminator string       `json:"discriminator"`
 	ViewContent   string       `json:"viewContent,omitempty"`
 	ViewType      string       `json:"viewType,omitempty"`
 	MediaType     string       `json:"mediaType,omitempty"`
 	Filename      string       `json:"filename,omitempty"`
 	Version       string       `json:"version,omitempty"`
-	Length        int          `json:"length,omitempty"`
 	State         string       `json:"state"`
-	PublishDate   *time.Time   `json:"publishDate"`
-	PublishedAt   *time.Time   `json:"publishedAt"`
-	Content       *FileContent `json:"content,omitempty"`
 	Type          string       `json:"type"`
 	Name          string       `json:"name,omitempty"`
+	Length        int          `json:"length,omitempty"`
 	ID            int          `json:"id"`
 	Order         int          `json:"order"`
-	TaskID        *int         `json:"taskId,omitempty"`
 }
 
 // FileContent represents file content information.
@@ -127,34 +127,34 @@ type DownloadLinkResponse struct {
 
 // Deadline represents a student's deadline for an exercise.
 type Deadline struct {
-	ID       int            `json:"id"`
-	Exercise DeadlineExercise `json:"exercise"`
-	State    string         `json:"state"`
-	Deadline time.Time      `json:"deadline"`
-	CreatedAt time.Time     `json:"createdAt"`
-	RejectAt *time.Time     `json:"rejectAt"`
-	Reviewer *Reviewer      `json:"reviewer"`
-	Course   CourseRef      `json:"course"`
-	Theme    ThemeRef       `json:"theme"`
-	Longread LongreadRef    `json:"longread"`
+	Exercise  DeadlineExercise `json:"exercise"`
+	Deadline  time.Time        `json:"deadline"`
+	CreatedAt time.Time        `json:"createdAt"`
+	RejectAt  *time.Time       `json:"rejectAt"`
+	Reviewer  *Reviewer        `json:"reviewer"`
+	Course    CourseRef        `json:"course"`
+	Theme     ThemeRef         `json:"theme"`
+	Longread  LongreadRef      `json:"longread"`
+	State     string           `json:"state"`
+	ID        int              `json:"id"`
 }
 
 // DeadlineExercise is the exercise info embedded in a deadline.
 type DeadlineExercise struct {
-	ID        int          `json:"id"`
-	Name      string       `json:"name"`
-	Type      string       `json:"type"`
-	MaxScore  int          `json:"maxScore"`
-	StartDate *time.Time   `json:"startDate"`
-	Deadline  time.Time    `json:"deadline"`
+	StartDate *time.Time       `json:"startDate"`
+	Deadline  time.Time        `json:"deadline"`
 	Activity  DeadlineActivity `json:"activity"`
+	Name      string           `json:"name"`
+	Type      string           `json:"type"`
+	ID        int              `json:"id"`
+	MaxScore  int              `json:"maxScore"`
 }
 
 // DeadlineActivity is the activity info in a deadline exercise.
 type DeadlineActivity struct {
-	ID                int     `json:"id"`
 	Name              string  `json:"name"`
 	Weight            float64 `json:"weight"`
+	ID                int     `json:"id"`
 	IsLateDaysEnabled bool    `json:"isLateDaysEnabled"`
 }
 
@@ -169,8 +169,8 @@ type Reviewer struct {
 
 // CourseRef is a minimal course reference.
 type CourseRef struct {
-	ID         int    `json:"id"`
 	Name       string `json:"name"`
+	ID         int    `json:"id"`
 	IsArchived bool   `json:"isArchived"`
 }
 
@@ -188,9 +188,9 @@ type LongreadRef struct {
 
 // CourseProgress represents the student's overall progress in a course.
 type CourseProgress struct {
-	EarnedScore    float64 `json:"earnedScore"`
+	EarnedScore     float64 `json:"earnedScore"`
 	LeftToEarnScore float64 `json:"leftToEarnScore"`
-	MaxScore       float64 `json:"maxScore"`
+	MaxScore        float64 `json:"maxScore"`
 }
 
 // StudentPerformance represents the student's performance in a course.
@@ -201,35 +201,35 @@ type StudentPerformance struct {
 
 // TaskScore represents a single task's score in the gradebook.
 type TaskScore struct {
-	ID         int          `json:"id"`
-	State      string       `json:"state"`
 	Score      *float64     `json:"score"`
+	Activity   ActivityFull `json:"activity"`
+	State      string       `json:"state"`
+	ID         int          `json:"id"`
 	ExerciseID int          `json:"exerciseId"`
 	MaxScore   int          `json:"maxScore"`
-	Activity   ActivityFull `json:"activity"`
 }
 
 // ActivityFull represents an activity with all fields.
 type ActivityFull struct {
-	ID                    int      `json:"id"`
+	AverageScoreThreshold *float64 `json:"averageScoreThreshold"`
 	Name                  string   `json:"name"`
 	Weight                float64  `json:"weight"`
+	ID                    int      `json:"id"`
 	MaxExercisesCount     int      `json:"maxExercisesCount"`
-	AverageScoreThreshold *float64 `json:"averageScoreThreshold"`
 }
 
 // ActivityRef is a minimal activity reference.
 type ActivityRef struct {
-	ID     int     `json:"id"`
 	Name   string  `json:"name"`
 	Weight float64 `json:"weight"`
+	ID     int     `json:"id"`
 }
 
 // Blocker represents a blocker activity in performance.
 type Blocker struct {
-	ActivityID            int     `json:"activityId"`
 	ActivityName          string  `json:"activityName"`
 	AverageScoreThreshold float64 `json:"averageScoreThreshold"`
+	ActivityID            int     `json:"activityId"`
 }
 
 // ActivitiesPerformance represents performance grouped by activity type.
@@ -249,35 +249,35 @@ type ActivityPerformanceItem struct {
 
 // Task represents a full task detail (student's assignment instance).
 type Task struct {
-	ID          int        `json:"id"`
-	Type        string     `json:"type"`
-	State       string     `json:"state"`
-	Score       *float64   `json:"score"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	StartedAt   *time.Time `json:"startedAt"`
-	SubmitAt    *time.Time `json:"submitAt"`
-	RejectAt    *time.Time `json:"rejectAt"`
-	EvaluateAt  *time.Time `json:"evaluateAt"`
-	Deadline    time.Time  `json:"deadline"`
-	Exercise    TaskExercise `json:"exercise"`
-	Course      CourseRef  `json:"course"`
-	Theme       ThemeRef   `json:"theme"`
-	Longread    LongreadRef `json:"longread"`
-	Student     TaskStudent `json:"student"`
-	Reviewer    *Reviewer  `json:"reviewer"`
-	Solution    *Solution  `json:"solution"`
+	Score      *float64     `json:"score"`
+	StartedAt  *time.Time   `json:"startedAt"`
+	SubmitAt   *time.Time   `json:"submitAt"`
+	RejectAt   *time.Time   `json:"rejectAt"`
+	EvaluateAt *time.Time   `json:"evaluateAt"`
+	Reviewer   *Reviewer    `json:"reviewer"`
+	Solution   *Solution    `json:"solution"`
+	CreatedAt  time.Time    `json:"createdAt"`
+	Deadline   time.Time    `json:"deadline"`
+	Exercise   TaskExercise `json:"exercise"`
+	Course     CourseRef    `json:"course"`
+	Theme      ThemeRef     `json:"theme"`
+	Longread   LongreadRef  `json:"longread"`
+	Student    TaskStudent  `json:"student"`
+	Type       string       `json:"type"`
+	State      string       `json:"state"`
+	ID         int          `json:"id"`
 }
 
 // TaskExercise is the exercise info embedded in a task.
 type TaskExercise struct {
-	ID          int          `json:"id"`
-	Name        string       `json:"name"`
-	Type        string       `json:"type"`
-	MaxScore    int          `json:"maxScore"`
-	StartDate   *time.Time   `json:"startDate"`
-	Deadline    time.Time    `json:"deadline"`
-	ViewContent string       `json:"viewContent"`
-	Activity    ActivityRef  `json:"activity"`
+	StartDate   *time.Time  `json:"startDate"`
+	Deadline    time.Time   `json:"deadline"`
+	Activity    ActivityRef `json:"activity"`
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	ViewContent string      `json:"viewContent"`
+	ID          int         `json:"id"`
+	MaxScore    int         `json:"maxScore"`
 }
 
 // TaskStudent is the student info embedded in a task.
@@ -296,19 +296,19 @@ type Solution struct {
 
 // CourseExercises represents exercises list for a course.
 type CourseExercises struct {
-	ID        int               `json:"id"`
-	Name      string            `json:"name"`
-	Exercises []CourseExercise   `json:"exercises"`
+	Exercises []CourseExercise `json:"exercises"`
+	Name      string           `json:"name"`
+	ID        int              `json:"id"`
 }
 
 // CourseExercise is an exercise in the course exercises list.
 type CourseExercise struct {
-	ID       int         `json:"id"`
-	Name     string      `json:"name"`
-	Type     string      `json:"type"`
 	Activity ActivityRef `json:"activity"`
 	Longread LongreadRef `json:"longread"`
 	Theme    ThemeRef    `json:"theme"`
+	Name     string      `json:"name"`
+	Type     string      `json:"type"`
+	ID       int         `json:"id"`
 }
 
 // APIError represents an API error response.

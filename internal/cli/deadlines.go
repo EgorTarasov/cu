@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const deadlinesLimit = 100
+
 var deadlinesCmd = &cobra.Command{
 	Use:   "deadlines [course]",
 	Short: "Show upcoming deadlines",
@@ -33,7 +35,7 @@ Examples:
 			courseName = name
 		}
 
-		deadlines, err := client.GetDeadlines(ctx, 100, courseID)
+		deadlines, err := client.GetDeadlines(ctx, deadlinesLimit, courseID)
 		if err != nil {
 			fmt.Printf("Failed to fetch deadlines: %v\n", err)
 			return
@@ -52,7 +54,8 @@ Examples:
 		if courseName != "" {
 			fmt.Printf("Deadlines: %s\n\n", courseName)
 		} else {
-			fmt.Println("All upcoming deadlines\n")
+			fmt.Println("All upcoming deadlines")
+			fmt.Println()
 		}
 
 		now := time.Now()

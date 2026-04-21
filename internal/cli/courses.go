@@ -14,7 +14,7 @@ var coursesCmd = &cobra.Command{
 		ctx := cmd.Context()
 		client := mustClient()
 
-		courses, err := client.GetStudentCourses(ctx, 10000, "published")
+		courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
 		if err != nil {
 			fmt.Printf("Failed to fetch courses: %v\n", err)
 			return

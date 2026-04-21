@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+const maxCoursesLimit = 10000
+
 func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string) (*StudentCoursesResponse, error) {
 	if c.bffCookie == "" {
 		return nil, errors.New("bff.cookie is required for authentication")
@@ -96,9 +98,9 @@ func (c *Client) GetCourseOverview(ctx context.Context, courseID int) (*CourseOv
 func (c *Client) ResolveCourse(ctx context.Context, query string) (int, string, error) {
 	// Try numeric ID first.
 	if id, err := strconv.Atoi(query); err == nil {
-		courses, err := c.GetStudentCourses(ctx, 10000, "published")
+		courses, err := c.GetStudentCourses(ctx, maxCoursesLimit, "published")
 		if err != nil {
-			return id, "", nil // can't verify, but try with the ID
+			return id, "", err
 		}
 		for _, course := range courses.Items {
 			if course.ID == id {
@@ -109,7 +111,7 @@ func (c *Client) ResolveCourse(ctx context.Context, query string) (int, string, 
 	}
 
 	// Substring match on name (case-insensitive).
-	courses, err := c.GetStudentCourses(ctx, 10000, "published")
+	courses, err := c.GetStudentCourses(ctx, maxCoursesLimit, "published")
 	if err != nil {
 		return 0, "", fmt.Errorf("failed to fetch courses: %w", err)
 	}
@@ -144,7 +146,10 @@ func (c *Client) ResolveCourse(ctx context.Context, query string) (int, string, 
 		for _, m := range matches {
 			lines = append(lines, fmt.Sprintf("  %d  %s", m.ID, m.Name))
 		}
-		return 0, "", fmt.Errorf("multiple courses match %q:\n%s\nspecify more precisely or use ID", query, strings.Join(lines, "\n"))
+		return 0, "", fmt.Errorf(
+			"multiple courses match %q:\n%s\nspecify more precisely or use ID",
+			query, strings.Join(lines, "\n"),
+		)
 	}
 }
 
