@@ -1,0 +1,1156 @@
+openapi: 3.0.3
+info:
+  title: Central University LMS API
+  description: |
+    API for Central University LMS (my.centraluniversity.ru).
+    Auth: OpenID Connect via id.centraluniversity.ru (Keycloak), client_id=api-gateway.
+    Same auth works for git.culab.ru (GitLab).
+    PDF files are stored in Yandex Cloud S3 (storage.yandexcloud.net/university-lms-materials/).
+  version: 1.0.0
+servers:
+  - url: https://my.centraluniversity.ru/api
+
+paths:
+  # ===== Account =====
+  /account/me:
+    get:
+      tags: [account]
+      summary: Current user info (JWT claims)
+      description: Returns decoded JWT token with user profile, roles, groups, scopes.
+      responses:
+        "200":
+          description: User JWT claims
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountMe"
+
+  # ===== Student =====
+  /micro-lms/students/me:
+    get:
+      tags: [student]
+      summary: Current student info
+      responses:
+        "200":
+          description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+
+  /student-hub/students/me:
+    get:
+      tags: [student]
+      summary: Extended student profile (student-hub)
+      description: Includes personal data, contacts, enrollment info, dormitory, scholarships.
+      responses:
+        "200":
+          description: Extended student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentHubProfile"
+
+  # ===== Courses =====
+  /micro-lms/courses/student:
+    get:
+      tags: [courses]
+      summary: List student's courses
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10000
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [published]
+      responses:
+        "200":
+          description: Paginated list of courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesListResponse"
+
+  /micro-lms/courses/{courseId}:
+    get:
+      tags: [courses]
+      summary: Course details
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Course info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /micro-lms/courses/{courseId}/overview:
+    get:
+      tags: [courses]
+      summary: Course structure (themes → longreads → exercises)
+      description: |
+        Returns full course tree: themes with longreads and exercises.
+        This is the main endpoint for getting course content structure.
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Course overview with themes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseOverview"
+
+  # ===== Content / Materials =====
+  /micro-lms/longreads/{longreadId}:
+    get:
+      tags: [content]
+      summary: Longread metadata
+      parameters:
+        - $ref: "#/components/parameters/longreadId"
+      responses:
+        "200":
+          description: Longread info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Longread"
+
+  /micro-lms/longreads/{longreadId}/materials:
+    get:
+      tags: [content]
+      summary: Longread materials (markdown, files, exercises)
+      description: |
+        Returns all materials for a longread. Material types:
+        - type=markdown, viewType=ngxMarkdown: HTML content (may contain links to git.culab.ru)
+        - type=content, viewType=file: PDF/file attachment (use filename+version with download-link endpoint)
+        - type=coding, viewType=exerciseCoding: Exercise/homework
+      parameters:
+        - $ref: "#/components/parameters/longreadId"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10000
+      responses:
+        "200":
+          description: Paginated list of materials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaterialsResponse"
+
+  /micro-lms/content/download-link:
+    get:
+      tags: [content]
+      summary: Get signed S3 URL for file download
+      description: |
+        Returns a pre-signed Yandex Cloud S3 URL for downloading a file.
+        The filename and version come from the material object (type=content, viewType=file).
+        URL pattern: https://storage.yandexcloud.net/university-lms-materials/{filename}_{version}.pdf?AWSAccessKeyId=...&Expires=...&Signature=...
+      parameters:
+        - name: filename
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "File path from material.filename, e.g. longreads/14964/Неделя 1_...pdf"
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "File version from material.version, e.g. 010e0d96"
+      responses:
+        "200":
+          description: Signed download URL (redirects or returns URL string)
+
+  /micro-lms/themes/{themeId}:
+    get:
+      tags: [content]
+      summary: Theme metadata
+      parameters:
+        - name: themeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Theme info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Theme"
+
+  # ===== Performance / Grades =====
+  /micro-lms/courses/{courseId}/student/progress:
+    get:
+      tags: [performance]
+      summary: Student's overall course progress (score)
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Progress summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseProgress"
+
+  /micro-lms/courses/{courseId}/student-performance:
+    get:
+      tags: [performance]
+      summary: Student's performance per exercise (gradebook)
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Task scores and blockers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentPerformance"
+
+  /micro-lms/courses/{courseId}/activities-performance:
+    get:
+      tags: [performance]
+      summary: Performance by activity type (homework, exam, etc.)
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Activity performance breakdown
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivitiesPerformance"
+
+  /micro-lms/courses/{courseId}/activities:
+    get:
+      tags: [performance]
+      summary: Course activities (grading categories)
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: List of activities with weights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+
+  /micro-lms/courses/{courseId}/exercises:
+    get:
+      tags: [performance]
+      summary: All exercises in a course
+      parameters:
+        - $ref: "#/components/parameters/courseId"
+      responses:
+        "200":
+          description: Course exercises list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseExercises"
+
+  # ===== Tasks =====
+  /micro-lms/tasks/{taskId}:
+    get:
+      tags: [tasks]
+      summary: Task details (student's assignment instance)
+      description: |
+        Returns full task info including exercise description, solution, score,
+        reviewer, deadlines, state transitions.
+        States: backlog, inProgress, submitted, evaluated, failed
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  # ===== Deadlines =====
+  /micro-lms/deadlines:
+    get:
+      tags: [deadlines]
+      summary: Student's upcoming deadlines
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: courseId
+          in: query
+          schema:
+            type: integer
+          description: Filter by course (optional)
+      responses:
+        "200":
+          description: List of deadlines sorted by date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Deadline"
+
+  # ===== Notifications =====
+  /notification-hub/notifications/in-app:
+    post:
+      tags: [notifications]
+      summary: Get in-app notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  default: 20
+                category:
+                  type: string
+                  enum: [Education, Others]
+                  description: Optional category filter (ignored by server currently)
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notification-hub/notifications/in-app/stats:
+    get:
+      tags: [notifications]
+      summary: Notification read/unread stats
+      responses:
+        "200":
+          description: Stats per category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStats"
+
+  # ===== Config =====
+  /micro-lms/calendar-events/slot-management/config:
+    get:
+      tags: [config]
+      summary: Calendar slot management config
+      responses:
+        "200":
+          description: Slot management settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  openDate:
+                    type: string
+                    format: date-time
+                  closeDate:
+                    type: string
+                    format: date-time
+                  isEnabled:
+                    type: boolean
+
+  /admin/configurations/lms-block-requests:
+    get:
+      tags: [config]
+      summary: LMS block requests configuration
+      responses:
+        "204":
+          description: No content (feature disabled)
+
+  /hub/grants/me:
+    get:
+      tags: [config]
+      summary: User grants
+      responses:
+        "200":
+          description: List of grants (usually empty for students)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+components:
+  parameters:
+    courseId:
+      name: courseId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Course ID
+    longreadId:
+      name: longreadId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Longread ID
+
+  schemas:
+    AccountMe:
+      type: object
+      properties:
+        sub:
+          type: string
+          description: User UUID
+        preferred_username:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        middle_name:
+          type: string
+        email:
+          type: string
+        phone_number:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        groups:
+          type: array
+          items:
+            type: string
+        scope:
+          type: string
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lastName:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+        universityEmail:
+          type: string
+        timeAccount:
+          type: string
+        studyStartYear:
+          type: integer
+        studyLevel:
+          type: string
+          enum: [bachelor, master]
+        lateDaysBalance:
+          type: integer
+
+    StudentHubProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        birthdate:
+          type: string
+          format: date
+        telegram:
+          type: string
+        timeLogin:
+          type: string
+        course:
+          type: integer
+        gender:
+          type: string
+          enum: [Male, Female]
+        enrollmentPhase:
+          type: string
+          enum: [Student, Applicant]
+        educationLevel:
+          type: string
+          enum: [Bachelor, Master]
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              type:
+                type: string
+                enum: [Cu, Personal]
+        phones:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              type:
+                type: string
+                enum: [Mobile]
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        state:
+          type: string
+          enum: [published, draft]
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+        settings:
+          $ref: "#/components/schemas/CourseSettings"
+        subjectId:
+          type: integer
+          nullable: true
+        isArchived:
+          type: boolean
+        category:
+          type: string
+          enum: [development, softSkills, general, withoutCategory]
+        categoryCover:
+          type: string
+
+    CourseSettings:
+      type: object
+      properties:
+        skillLevel:
+          type: string
+        isSkillLevelEnabled:
+          type: boolean
+        syllabusUrl:
+          type: string
+          nullable: true
+        timeChannelUrl:
+          type: string
+          nullable: true
+
+    CoursesListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        paging:
+          $ref: "#/components/schemas/Paging"
+
+    CourseOverview:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        isArchived:
+          type: boolean
+        state:
+          type: string
+        settings:
+          $ref: "#/components/schemas/CourseSettings"
+        themes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThemeOverview"
+
+    ThemeOverview:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        order:
+          type: integer
+        state:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+        longreads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LongreadOverview"
+
+    LongreadOverview:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [common]
+        name:
+          type: string
+        state:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExerciseOverview"
+
+    ExerciseOverview:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        maxScore:
+          type: integer
+        activity:
+          $ref: "#/components/schemas/ActivityRef"
+        deadline:
+          type: string
+          format: date-time
+
+    Longread:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        name:
+          type: string
+        order:
+          type: integer
+        state:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+
+    Material:
+      type: object
+      description: |
+        Material in a longread. discriminator determines the type:
+        - markdown: HTML content in viewContent
+        - file: PDF/attachment, use filename+version with /content/download-link
+        - coding: Exercise
+      properties:
+        id:
+          type: integer
+        order:
+          type: integer
+        discriminator:
+          type: string
+          enum: [markdown, file, coding]
+        type:
+          type: string
+          enum: [markdown, content, coding]
+        viewType:
+          type: string
+          enum: [ngxMarkdown, file, exerciseCoding]
+        name:
+          type: string
+          nullable: true
+        state:
+          type: string
+        viewContent:
+          type: string
+          nullable: true
+          description: JSON string with HTML content (for markdown type)
+        # File-specific fields
+        filename:
+          type: string
+          nullable: true
+          description: "S3 path for file download, e.g. longreads/14964/filename.pdf"
+        version:
+          type: string
+          nullable: true
+          description: "File version for download URL"
+        length:
+          type: integer
+          nullable: true
+          description: File size in bytes
+        mediaType:
+          type: string
+          nullable: true
+        content:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+            filename:
+              type: string
+            mediaType:
+              type: string
+            version:
+              type: string
+            length:
+              type: integer
+        # Exercise-specific fields
+        estimation:
+          type: object
+          nullable: true
+          properties:
+            startDate:
+              type: string
+              format: date-time
+            timer:
+              type: integer
+              nullable: true
+            maxScore:
+              type: integer
+            deadline:
+              type: string
+              format: date-time
+            activity:
+              $ref: "#/components/schemas/Activity"
+        taskId:
+          type: integer
+          nullable: true
+
+    MaterialsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Material"
+        paging:
+          $ref: "#/components/schemas/Paging"
+
+    Theme:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        state:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+        order:
+          type: integer
+
+    CourseProgress:
+      type: object
+      properties:
+        earnedScore:
+          type: number
+        leftToEarnScore:
+          type: number
+        maxScore:
+          type: number
+
+    StudentPerformance:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              state:
+                type: string
+                enum: [backlog, inProgress, submitted, evaluated, failed]
+              score:
+                type: number
+                nullable: true
+              exerciseId:
+                type: integer
+              maxScore:
+                type: integer
+              activity:
+                $ref: "#/components/schemas/Activity"
+        blockers:
+          type: array
+          items:
+            type: object
+            properties:
+              activityId:
+                type: integer
+              activityName:
+                type: string
+              averageScoreThreshold:
+                type: number
+
+    ActivitiesPerformance:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              activity:
+                $ref: "#/components/schemas/Activity"
+              total:
+                type: number
+              average:
+                type: number
+              isBlocker:
+                type: boolean
+        totalWeight:
+          type: number
+        totalScore:
+          type: number
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        weight:
+          type: number
+        maxExercisesCount:
+          type: integer
+        averageScoreThreshold:
+          type: number
+          nullable: true
+        isLateDaysEnabled:
+          type: boolean
+
+    ActivityRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        weight:
+          type: number
+
+    CourseExercises:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        exercises:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              type:
+                type: string
+                enum: [coding]
+              activity:
+                $ref: "#/components/schemas/ActivityRef"
+              longread:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+              theme:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  order:
+                    type: integer
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [coding]
+        state:
+          type: string
+          enum: [backlog, inProgress, submitted, evaluated, failed]
+        score:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        submitAt:
+          type: string
+          format: date-time
+          nullable: true
+        rejectAt:
+          type: string
+          format: date-time
+          nullable: true
+        evaluateAt:
+          type: string
+          format: date-time
+          nullable: true
+        deadline:
+          type: string
+          format: date-time
+        exercise:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            type:
+              type: string
+            maxScore:
+              type: integer
+            startDate:
+              type: string
+              format: date-time
+            deadline:
+              type: string
+              format: date-time
+            viewContent:
+              type: string
+              description: JSON with exercise description HTML
+            activity:
+              $ref: "#/components/schemas/ActivityRef"
+        course:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        theme:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        student:
+          $ref: "#/components/schemas/Student"
+        reviewer:
+          $ref: "#/components/schemas/Reviewer"
+        solution:
+          type: object
+          nullable: true
+          properties:
+            type:
+              type: string
+            solutionUrl:
+              type: string
+              nullable: true
+            answers:
+              type: object
+              nullable: true
+            attachments:
+              type: array
+              items:
+                type: object
+
+    Deadline:
+      type: object
+      properties:
+        id:
+          type: integer
+        exercise:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            type:
+              type: string
+            maxScore:
+              type: integer
+            startDate:
+              type: string
+              format: date-time
+            deadline:
+              type: string
+              format: date-time
+            activity:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                weight:
+                  type: number
+                isLateDaysEnabled:
+                  type: boolean
+        state:
+          type: string
+          enum: [backlog, inProgress, submitted, evaluated, failed]
+        deadline:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        rejectAt:
+          type: string
+          format: date-time
+          nullable: true
+        reviewer:
+          $ref: "#/components/schemas/Reviewer"
+        course:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            isArchived:
+              type: boolean
+        theme:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        longread:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+
+    Reviewer:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        identityEmail:
+          type: string
+        email:
+          type: string
+        timeAccount:
+          type: string
+        lastName:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+          nullable: true
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        category:
+          type: string
+          enum: [Education, Others]
+        expireAt:
+          type: string
+          format: date-time
+        notificationId:
+          type: string
+          description: "Template ID, e.g. lms_task_evaluated, lms_task_for_student_created"
+        title:
+          type: string
+        description:
+          type: string
+        link:
+          type: object
+          properties:
+            uri:
+              type: string
+            label:
+              type: string
+            target:
+              type: string
+
+    NotificationStats:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              hasUnread:
+                type: boolean
+              lastReadNotificationId:
+                type: integer
+              category:
+                type: string
+
+    Paging:
+      type: object
+      properties:
+        limit:
+          type: integer
+        offset:
+          type: integer
+        totalCount:
+          type: integer
