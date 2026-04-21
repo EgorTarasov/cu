@@ -1,11 +1,11 @@
 package main
 
 import (
-	"cu-sync/internal/cli"
+	"cu-sync/internal/cli/command"
 )
 
 func main() {
-	if err := cli.RootCmd.Execute(); err != nil {
+	if err := command.RootCmd.Execute(); err != nil {
 		panic(err)
 	}
 }

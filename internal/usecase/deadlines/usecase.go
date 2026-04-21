@@ -8,8 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"cu-sync/internal/usecase/deadlines/model/input"
-	"cu-sync/internal/usecase/deadlines/model/output"
+	"cu-sync/internal/model"
 )
 
 const (
@@ -29,7 +28,7 @@ func New(lms LMSClient) *UseCase {
 }
 
 // List fetches deadlines, sorts by date, and classifies urgency.
-func (uc *UseCase) List(ctx context.Context, in input.ListInput) (*output.ListOutput, error) {
+func (uc *UseCase) List(ctx context.Context, in model.DeadlinesListInput) (*model.DeadlinesListOutput, error) {
 	var courseID *int
 	var courseName string
 
@@ -53,19 +52,19 @@ func (uc *UseCase) List(ctx context.Context, in input.ListInput) (*output.ListOu
 	})
 
 	now := time.Now()
-	items := make([]output.DeadlineItem, 0, len(deadlines))
+	items := make([]model.DeadlineItem, 0, len(deadlines))
 
 	for _, dl := range deadlines {
 		remaining := dl.Deadline.Sub(now)
 
-		var urgency output.UrgencyLevel
+		var urgency model.UrgencyLevel
 		switch {
 		case remaining < 0 || remaining < 24*time.Hour:
-			urgency = output.UrgencyUrgent
+			urgency = model.UrgencyUrgent
 		case remaining < 3*24*time.Hour:
-			urgency = output.UrgencySoon
+			urgency = model.UrgencySoon
 		default:
-			urgency = output.UrgencyNormal
+			urgency = model.UrgencyNormal
 		}
 
 		var reviewerName string
@@ -73,7 +72,7 @@ func (uc *UseCase) List(ctx context.Context, in input.ListInput) (*output.ListOu
 			reviewerName = dl.Reviewer.FirstName + " " + dl.Reviewer.LastName
 		}
 
-		items = append(items, output.DeadlineItem{
+		items = append(items, model.DeadlineItem{
 			ExerciseName: dl.Exercise.Name,
 			CourseName:   dl.Course.Name,
 			State:        dl.State,
@@ -85,7 +84,7 @@ func (uc *UseCase) List(ctx context.Context, in input.ListInput) (*output.ListOu
 		})
 	}
 
-	return &output.ListOutput{
+	return &model.DeadlinesListOutput{
 		Items:      items,
 		CourseName: courseName,
 	}, nil

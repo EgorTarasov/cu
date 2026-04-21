@@ -2,8 +2,7 @@ package task
 
 import (
 	"context"
-
-	"cu-sync/internal/cu"
+	"cu-sync/internal/gateway/cu"
 )
 
 // LMSClient defines the subset of the LMS API needed by the task usecase.

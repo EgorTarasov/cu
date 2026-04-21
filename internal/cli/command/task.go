@@ -1,12 +1,12 @@
-package cli
+package command
 
 import (
 	"fmt"
 	"os"
 	"strconv"
 
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/task"
-	"cu-sync/internal/usecase/task/model/input"
 
 	"github.com/spf13/cobra"
 )
@@ -31,7 +31,7 @@ Examples:
 		}
 
 		uc := task.New(client)
-		out, err := uc.Get(ctx, input.GetInput{TaskID: taskID})
+		out, err := uc.Get(ctx, model.TaskGetInput{TaskID: taskID})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to fetch task: %v\n", err)
 			os.Exit(1)

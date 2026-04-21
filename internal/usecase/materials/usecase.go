@@ -2,13 +2,12 @@ package materials
 
 import (
 	"context"
+	cu2 "cu-sync/internal/gateway/cu"
 	"fmt"
 	"path/filepath"
 	"sync/atomic"
 
-	"cu-sync/internal/cu"
-	"cu-sync/internal/usecase/materials/model/input"
-	"cu-sync/internal/usecase/materials/model/output"
+	"cu-sync/internal/model"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -19,7 +18,7 @@ const (
 )
 
 // EventCallback is called for each material event during download.
-type EventCallback func(event output.MaterialEvent)
+type EventCallback func(event model.MaterialEvent)
 
 // UseCase implements the materials business logic.
 type UseCase struct {
@@ -35,9 +34,9 @@ func New(lms LMSClient, gitlab GitLabDownloader) *UseCase {
 // Download fetches course materials and emits events via the callback.
 func (uc *UseCase) Download(
 	ctx context.Context,
-	in input.DownloadInput,
+	in model.MaterialsDownloadInput,
 	onEvent EventCallback,
-) (*output.DownloadOutput, error) {
+) (*model.MaterialsDownloadOutput, error) {
 	courseID, courseName, err := uc.lms.ResolveCourse(ctx, in.CourseQuery)
 	if err != nil {
 		return nil, fmt.Errorf("resolving course: %w", err)
@@ -63,7 +62,7 @@ func (uc *UseCase) Download(
 			continue
 		}
 
-		onEvent(output.MaterialEvent{Type: output.EventTheme, Message: theme.Name})
+		onEvent(model.MaterialEvent{Type: model.MaterialEventTheme, Message: theme.Name})
 
 		themeDir := filepath.Join(in.BasePath, sanitizeFilename(courseName),
 			fmt.Sprintf("%02d-%s", theme.Order, sanitizeFilename(theme.Name)))
@@ -79,7 +78,7 @@ func (uc *UseCase) Download(
 		}
 	}
 
-	return &output.DownloadOutput{
+	return &model.MaterialsDownloadOutput{
 		TotalFiles:      totalFiles.Load(),
 		DownloadedFiles: downloaded.Load(),
 	}, nil
@@ -96,8 +95,8 @@ func (uc *UseCase) processLongread(
 ) {
 	materials, err := uc.lms.GetLongReadContent(ctx, longreadID)
 	if err != nil {
-		onEvent(output.MaterialEvent{
-			Type:    output.EventError,
+		onEvent(model.MaterialEvent{
+			Type:    model.MaterialEventError,
 			Message: fmt.Sprintf("failed to fetch %s: %v", longreadName, err),
 		})
 		return
@@ -115,7 +114,7 @@ func (uc *UseCase) processLongread(
 
 func (uc *UseCase) processFile(
 	ctx context.Context,
-	mat cu.Material,
+	mat cu2.Material,
 	themeDir string,
 	linksOnly bool,
 	g *errgroup.Group,
@@ -123,8 +122,8 @@ func (uc *UseCase) processFile(
 	onEvent EventCallback,
 ) {
 	if linksOnly {
-		onEvent(output.MaterialEvent{
-			Type:    output.EventPDF,
+		onEvent(model.MaterialEvent{
+			Type:    model.MaterialEventPDF,
 			Message: fmt.Sprintf("%s (%.1f KB)", mat.Content.Name, float64(mat.Length)/bytesPerKB),
 		})
 		return
@@ -135,15 +134,15 @@ func (uc *UseCase) processFile(
 	g.Go(func() error {
 		fp, err := uc.lms.DownloadFile(ctx, mat, themeDir)
 		if err != nil {
-			onEvent(output.MaterialEvent{
-				Type:    output.EventError,
+			onEvent(model.MaterialEvent{
+				Type:    model.MaterialEventError,
 				Message: fmt.Sprintf("failed: %s: %v", mat.Content.Name, err),
 			})
 			return nil
 		}
 		downloaded.Add(1)
-		onEvent(output.MaterialEvent{
-			Type:     output.EventSaved,
+		onEvent(model.MaterialEvent{
+			Type:     model.MaterialEventSaved,
 			Message:  filepath.Base(fp),
 			FilePath: fp,
 		})
@@ -161,22 +160,22 @@ func (uc *UseCase) processMarkdown(
 ) {
 	links := extractLinks(viewContent)
 	for _, link := range links {
-		if !linksOnly && uc.gitlab != nil && cu.IsGitLabLink(link) {
+		if !linksOnly && uc.gitlab != nil && cu2.IsGitLabLink(link) {
 			totalFiles.Add(1)
 			link := link
 			g.Go(func() error {
 				saved, err := uc.gitlab.DownloadGitLabLink(ctx, link, themeDir)
 				if err != nil {
-					onEvent(output.MaterialEvent{
-						Type:    output.EventError,
+					onEvent(model.MaterialEvent{
+						Type:    model.MaterialEventError,
 						Message: fmt.Sprintf("failed: %s: %v", link, err),
 					})
 					return nil
 				}
 				for _, s := range saved {
 					downloaded.Add(1)
-					onEvent(output.MaterialEvent{
-						Type:     output.EventSaved,
+					onEvent(model.MaterialEvent{
+						Type:     model.MaterialEventSaved,
 						Message:  filepath.Base(s),
 						FilePath: s,
 					})
@@ -184,8 +183,8 @@ func (uc *UseCase) processMarkdown(
 				return nil
 			})
 		} else {
-			onEvent(output.MaterialEvent{
-				Type:    output.EventLink,
+			onEvent(model.MaterialEvent{
+				Type:    model.MaterialEventLink,
 				Message: link,
 			})
 		}

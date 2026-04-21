@@ -1,10 +1,14 @@
-package output
+package model
 
 import "time"
 
+// TaskGetInput is the input for fetching a single task.
+type TaskGetInput struct {
+	TaskID int
+}
+
 // TaskOutput contains the task details with computed fields.
 type TaskOutput struct {
-	// Direct fields from the task.
 	CourseName      string
 	ThemeName       string
 	ExerciseName    string
@@ -21,7 +25,6 @@ type TaskOutput struct {
 	MaxScore        int
 	LateDaysBalance int
 
-	// Computed fields.
 	StateLabel     string
 	TimeLeft       string
 	ScoreFormatted string

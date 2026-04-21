@@ -7,8 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"cu-sync/internal/usecase/task/model/input"
-	"cu-sync/internal/usecase/task/model/output"
+	"cu-sync/internal/model"
 )
 
 const (
@@ -28,13 +27,13 @@ func New(lms LMSClient) *UseCase {
 }
 
 // Get fetches a task and returns it with computed fields.
-func (uc *UseCase) Get(ctx context.Context, in input.GetInput) (*output.TaskOutput, error) {
+func (uc *UseCase) Get(ctx context.Context, in model.TaskGetInput) (*model.TaskOutput, error) {
 	t, err := uc.lms.GetTask(ctx, in.TaskID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching task %d: %w", in.TaskID, err)
 	}
 
-	out := &output.TaskOutput{
+	out := &model.TaskOutput{
 		CourseName:      t.Course.Name,
 		ThemeName:       t.Theme.Name,
 		ExerciseName:    t.Exercise.Name,

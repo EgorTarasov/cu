@@ -1,4 +1,4 @@
-package cli
+package command
 
 import (
 	"fmt"
@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/materials"
-	"cu-sync/internal/usecase/materials/model/input"
-	"cu-sync/internal/usecase/materials/model/output"
 
 	"github.com/spf13/cobra"
 )
@@ -64,18 +63,18 @@ var fetchCourseCmd = &cobra.Command{
 			fmt.Println("Downloading course materials...")
 
 			uc := materials.New(client, nil)
-			onEvent := func(event output.MaterialEvent) {
+			onEvent := func(event model.MaterialEvent) {
 				switch event.Type {
-				case output.EventSaved:
+				case model.MaterialEventSaved:
 					fmt.Printf("  saved: %s\n", event.Message)
-				case output.EventError:
+				case model.MaterialEventError:
 					fmt.Fprintf(os.Stderr, "  %s\n", event.Message)
-				case output.EventTheme, output.EventPDF, output.EventLink:
+				case model.MaterialEventTheme, model.MaterialEventPDF, model.MaterialEventLink:
 					// skip verbose output in dump mode
 				}
 			}
 
-			result, err := uc.Download(ctx, input.DownloadInput{
+			result, err := uc.Download(ctx, model.MaterialsDownloadInput{
 				CourseQuery: args[0],
 				BasePath:    courseDir,
 			}, onEvent)

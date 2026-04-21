@@ -1,4 +1,4 @@
-package cli
+package command
 
 func init() {
 	RootCmd.AddCommand(loginCmd)

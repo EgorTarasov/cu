@@ -1,11 +1,10 @@
-package cli
+package command
 
 import (
 	"fmt"
 
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/deadlines"
-	"cu-sync/internal/usecase/deadlines/model/input"
-	"cu-sync/internal/usecase/deadlines/model/output"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +25,7 @@ Examples:
 		ctx := cmd.Context()
 		client := mustClient()
 
-		in := input.ListInput{}
+		in := model.DeadlinesListInput{}
 		if len(args) > 0 {
 			in.CourseQuery = args[0]
 		}
@@ -42,7 +41,7 @@ Examples:
 	},
 }
 
-func printDeadlines(result *output.ListOutput) {
+func printDeadlines(result *model.DeadlinesListOutput) {
 	if len(result.Items) == 0 {
 		fmt.Println("No upcoming deadlines!")
 		return
@@ -58,11 +57,11 @@ func printDeadlines(result *output.ListOutput) {
 	for _, dl := range result.Items {
 		marker := " "
 		switch dl.Urgency {
-		case output.UrgencyUrgent:
+		case model.UrgencyUrgent:
 			marker = "!"
-		case output.UrgencySoon:
+		case model.UrgencySoon:
 			marker = "*"
-		case output.UrgencyNormal:
+		case model.UrgencyNormal:
 			// no marker
 		}
 

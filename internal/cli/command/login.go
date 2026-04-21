@@ -1,13 +1,13 @@
-package cli
+package command
 
 import (
 	"context"
+	cu2 "cu-sync/internal/gateway/cu"
 	"fmt"
 	"time"
 
-	"cu-sync/internal/cu"
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/login"
-	"cu-sync/internal/usecase/login/model/input"
 
 	"github.com/spf13/cobra"
 )
@@ -29,26 +29,26 @@ Examples:
 	Run: func(cmd *cobra.Command, _ []string) {
 		gitlabMode, _ := cmd.Flags().GetBool("gitlab")
 		ctx := context.Background()
-		in := input.LoginInput{Timeout: loginTimeout}
+		in := model.LoginInput{Timeout: loginTimeout}
 
 		if gitlabMode {
 			fmt.Println("Opening browser for GitLab authentication...")
 			fmt.Println("Click \"Центральный Университет\" to sign in via SSO.")
 
-			uc := login.New(cu.LoginGitLabWithBrowser, cu.SaveGitLabCookie, nil)
+			uc := login.New(cu2.LoginGitLabWithBrowser, cu2.SaveGitLabCookie, nil)
 			if _, err := uc.Execute(ctx, in); err != nil {
 				fmt.Printf("GitLab login failed: %v\n", err)
 				return
 			}
 
-			path, _ := cu.GitLabCookieFilePath()
+			path, _ := cu2.GitLabCookieFilePath()
 			fmt.Printf("GitLab cookie saved to %s\n", path)
 			fmt.Println("You can now use 'cu materials' to download longreads from git.culab.ru.")
 		} else {
 			fmt.Println("Opening browser for LMS authentication...")
 			fmt.Println("Please log in via the browser window.")
 
-			uc := login.New(cu.LoginWithBrowser, cu.SaveCookie, nil)
+			uc := login.New(cu2.LoginWithBrowser, cu2.SaveCookie, nil)
 			result, err := uc.Execute(ctx, in)
 			if err != nil {
 				fmt.Printf("Login failed: %v\n", err)
@@ -62,7 +62,7 @@ Examples:
 				fmt.Println("Cookie validated successfully.")
 			}
 
-			path, _ := cu.CookieFilePath()
+			path, _ := cu2.CookieFilePath()
 			fmt.Printf("Cookie saved to %s\n", path)
 		}
 	},

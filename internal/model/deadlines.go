@@ -1,6 +1,11 @@
-package output
+package model
 
 import "time"
+
+// DeadlinesListInput is the input for listing deadlines.
+type DeadlinesListInput struct {
+	CourseQuery string
+}
 
 // UrgencyLevel classifies how urgent a deadline is.
 type UrgencyLevel string
@@ -23,8 +28,8 @@ type DeadlineItem struct {
 	ReviewerName string
 }
 
-// ListOutput is the result of listing deadlines.
-type ListOutput struct {
+// DeadlinesListOutput is the result of listing deadlines.
+type DeadlinesListOutput struct {
 	Items      []DeadlineItem
 	CourseName string
 }

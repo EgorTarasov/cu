@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"cu-sync/internal/usecase/courses/model/output"
+	"cu-sync/internal/model"
 )
 
 const maxCoursesLimit = 10000
@@ -20,19 +20,19 @@ func New(lms LMSClient) *UseCase {
 }
 
 // List fetches all published courses for the student.
-func (uc *UseCase) List(ctx context.Context) (*output.ListOutput, error) {
+func (uc *UseCase) List(ctx context.Context) (*model.CoursesListOutput, error) {
 	courses, err := uc.lms.GetStudentCourses(ctx, maxCoursesLimit, "published")
 	if err != nil {
 		return nil, fmt.Errorf("fetching courses: %w", err)
 	}
 
-	items := make([]output.CourseItem, 0, len(courses.Items))
+	items := make([]model.CourseItem, 0, len(courses.Items))
 	for _, c := range courses.Items {
-		items = append(items, output.CourseItem{
+		items = append(items, model.CourseItem{
 			ID:   c.ID,
 			Name: c.Name,
 		})
 	}
 
-	return &output.ListOutput{Items: items}, nil
+	return &model.CoursesListOutput{Items: items}, nil
 }

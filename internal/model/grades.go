@@ -1,16 +1,24 @@
-package output
+package model
 
-// SummaryItem represents one course in the grades summary.
-type SummaryItem struct {
+// GradesSummaryInput is the input for the grades summary.
+type GradesSummaryInput struct{}
+
+// GradesSummaryItem represents one course in the grades summary.
+type GradesSummaryItem struct {
 	CourseName  string
 	EarnedScore float64
 	MaxScore    float64
 	Error       error
 }
 
-// SummaryOutput is the result of the grades summary.
-type SummaryOutput struct {
-	Items []SummaryItem
+// GradesSummaryOutput is the result of the grades summary.
+type GradesSummaryOutput struct {
+	Items []GradesSummaryItem
+}
+
+// GradesDetailedInput is the input for detailed grades of a specific course.
+type GradesDetailedInput struct {
+	CourseQuery string
 }
 
 // ActivityBreakdown represents one activity's performance.
@@ -37,8 +45,8 @@ type BlockerInfo struct {
 	Threshold    float64
 }
 
-// DetailedOutput is the result of detailed grades for a course.
-type DetailedOutput struct {
+// GradesDetailedOutput is the result of detailed grades for a course.
+type GradesDetailedOutput struct {
 	CourseName string
 	Activities []ActivityBreakdown
 	TotalScore float64

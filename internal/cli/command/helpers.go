@@ -1,10 +1,9 @@
-package cli
+package command
 
 import (
+	"cu-sync/internal/gateway/cu"
 	"fmt"
 	"os"
-
-	"cu-sync/internal/cu"
 )
 
 // mustClient creates an authenticated client or exits.

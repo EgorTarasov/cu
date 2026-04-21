@@ -1,13 +1,12 @@
-package cli
+package command
 
 import (
+	"cu-sync/internal/cli/format"
 	"fmt"
 	"os"
 
-	"cu-sync/internal/format"
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/grades"
-	"cu-sync/internal/usecase/grades/model/input"
-	"cu-sync/internal/usecase/grades/model/output"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,7 @@ Examples:
 		uc := grades.New(client)
 
 		if len(args) == 0 {
-			result, err := uc.Summary(ctx, input.SummaryInput{})
+			result, err := uc.Summary(ctx, model.GradesSummaryInput{})
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
 				return
@@ -43,7 +42,7 @@ Examples:
 			return
 		}
 
-		result, err := uc.Detailed(ctx, input.DetailedInput{CourseQuery: args[0]})
+		result, err := uc.Detailed(ctx, model.GradesDetailedInput{CourseQuery: args[0]})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
 			return
@@ -52,7 +51,7 @@ Examples:
 	},
 }
 
-func printSummary(result *output.SummaryOutput) {
+func printSummary(result *model.GradesSummaryOutput) {
 	fmt.Println("Grades summary")
 	fmt.Println()
 	for _, item := range result.Items {
@@ -71,7 +70,7 @@ func printSummary(result *output.SummaryOutput) {
 	fmt.Println("\nUse: cu grades <course> for detailed view")
 }
 
-func printDetailed(result *output.DetailedOutput) {
+func printDetailed(result *model.GradesDetailedOutput) {
 	fmt.Printf("Grades: %s\n\n", result.CourseName)
 
 	fmt.Println("Activity breakdown:")

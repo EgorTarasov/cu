@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"cu-sync/internal/usecase/login/model/input"
-	"cu-sync/internal/usecase/login/model/output"
+	"cu-sync/internal/model"
 )
 
 // UseCase implements the login business logic.
@@ -25,7 +24,7 @@ func New(login AuthFunc, save SaveFunc, validate ValidateFunc) *UseCase {
 }
 
 // Execute performs the authentication flow: login via browser, optionally validate, and save cookie.
-func (uc *UseCase) Execute(ctx context.Context, in input.LoginInput) (*output.LoginOutput, error) {
+func (uc *UseCase) Execute(ctx context.Context, in model.LoginInput) (*model.LoginOutput, error) {
 	cookie, err := uc.login(ctx, in.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("login: %w", err)
@@ -40,7 +39,7 @@ func (uc *UseCase) Execute(ctx context.Context, in input.LoginInput) (*output.Lo
 		return nil, fmt.Errorf("saving cookie: %w", err)
 	}
 
-	return &output.LoginOutput{
+	return &model.LoginOutput{
 		ValidationError: validationErr,
 	}, nil
 }

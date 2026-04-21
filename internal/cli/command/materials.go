@@ -1,13 +1,12 @@
-package cli
+package command
 
 import (
+	"cu-sync/internal/gateway/cu"
 	"fmt"
 	"os"
 
-	"cu-sync/internal/cu"
+	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/materials"
-	"cu-sync/internal/usecase/materials/model/input"
-	"cu-sync/internal/usecase/materials/model/output"
 
 	"github.com/spf13/cobra"
 )
@@ -52,22 +51,22 @@ Examples:
 
 		uc := materials.New(client, gitlab)
 
-		onEvent := func(event output.MaterialEvent) {
+		onEvent := func(event model.MaterialEvent) {
 			switch event.Type {
-			case output.EventTheme:
+			case model.MaterialEventTheme:
 				fmt.Printf("[%s]\n", event.Message)
-			case output.EventPDF:
+			case model.MaterialEventPDF:
 				fmt.Printf("  [PDF] %s\n", event.Message)
-			case output.EventLink:
+			case model.MaterialEventLink:
 				fmt.Printf("  [link] %s\n", event.Message)
-			case output.EventSaved:
+			case model.MaterialEventSaved:
 				fmt.Printf("  saved: %s\n", event.Message)
-			case output.EventError:
+			case model.MaterialEventError:
 				fmt.Fprintf(os.Stderr, "  %s\n", event.Message)
 			}
 		}
 
-		result, err := uc.Download(ctx, input.DownloadInput{
+		result, err := uc.Download(ctx, model.MaterialsDownloadInput{
 			CourseQuery: args[0],
 			WeekFilter:  weekFilter,
 			LinksOnly:   linksOnly,
