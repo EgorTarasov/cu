@@ -1,4 +1,4 @@
-package mcp
+package format
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ const (
 	minutesPerHour = 60
 )
 
-func formatCoursesList(courses []cu.StudentCourse) string {
+func CoursesList(courses []cu.StudentCourse) string {
 	var b strings.Builder
 	b.WriteString("## Your Courses\n\n")
 	b.WriteString("| ID | Name | Category |\n")
@@ -35,7 +35,7 @@ func formatCoursesList(courses []cu.StudentCourse) string {
 	return b.String()
 }
 
-func formatSearchResults(courses []cu.StudentCourse, query string) string {
+func SearchResults(courses []cu.StudentCourse, query string) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("## Search: %q\n\n", query))
 
@@ -54,7 +54,7 @@ func formatSearchResults(courses []cu.StudentCourse, query string) string {
 	return b.String()
 }
 
-func formatCourseStructure(overview *cu.CourseOverview) string {
+func CourseStructure(overview *cu.CourseOverview) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("## %s\n\n", overview.Name))
 	b.WriteString(fmt.Sprintf("**ID:** %d | **State:** %s\n\n", overview.ID, overview.State))
@@ -84,7 +84,7 @@ func formatCourseStructure(overview *cu.CourseOverview) string {
 	return b.String()
 }
 
-func formatDeadlines(result *model.DeadlinesListOutput) string {
+func Deadlines(result *model.DeadlinesListOutput) string {
 	var b strings.Builder
 
 	if result.CourseName != "" {
@@ -133,7 +133,7 @@ func formatDeadlines(result *model.DeadlinesListOutput) string {
 	return b.String()
 }
 
-func formatGradesSummary(items []model.GradesSummaryItem) string {
+func GradesSummary(items []model.GradesSummaryItem) string {
 	var b strings.Builder
 	b.WriteString("## Grades Summary\n\n")
 	b.WriteString("| Course | Score | Max |\n")
@@ -151,7 +151,7 @@ func formatGradesSummary(items []model.GradesSummaryItem) string {
 	return b.String()
 }
 
-func formatGradesDetailed(result *model.GradesDetailedOutput) string {
+func GradesDetailed(result *model.GradesDetailedOutput) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("## Grades: %s\n\n", result.CourseName))
 
@@ -197,7 +197,7 @@ func formatGradesDetailed(result *model.GradesDetailedOutput) string {
 	return b.String()
 }
 
-func formatTask(t *cu.Task) string {
+func Task(t *cu.Task) string {
 	var b strings.Builder
 
 	b.WriteString(fmt.Sprintf("## Task: %s\n\n", t.Exercise.Name))
@@ -243,7 +243,7 @@ func formatTask(t *cu.Task) string {
 	return b.String()
 }
 
-func formatMaterialsList(overview *cu.CourseOverview, materials map[int]*cu.MaterialsResponse) string {
+func MaterialsList(overview *cu.CourseOverview, materials map[int]*cu.MaterialsResponse) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("## Materials: %s\n\n", overview.Name))
 
@@ -261,7 +261,7 @@ func formatMaterialsList(overview *cu.CourseOverview, materials map[int]*cu.Mate
 				case mat.Discriminator == "file" && mat.Content != nil:
 					b.WriteString(fmt.Sprintf("- 📄 **%s** (%.1f KB)\n", mat.Content.Name, float64(mat.Length)/1024)) //nolint:mnd // bytes to KB
 				case mat.Type == "markdown" && mat.ViewContent != "":
-					links := extractLinks(mat.ViewContent)
+					links := ExtractLinks(mat.ViewContent)
 					for _, link := range links {
 						b.WriteString(fmt.Sprintf("- 🔗 %s\n", link))
 					}
@@ -277,7 +277,8 @@ func formatMaterialsList(overview *cu.CourseOverview, materials map[int]*cu.Mate
 
 var linkPattern = regexp.MustCompile(`href=\\"([^"\\]+)\\"`)
 
-func extractLinks(viewContent string) []string {
+// ExtractLinks extracts unique external links from markdown view content.
+func ExtractLinks(viewContent string) []string {
 	matches := linkPattern.FindAllStringSubmatch(viewContent, -1)
 	var links []string
 	seen := make(map[string]bool)
