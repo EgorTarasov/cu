@@ -2,11 +2,18 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 
+	"cu-sync/internal/usecase/materials"
+	"cu-sync/internal/usecase/materials/model/input"
+	"cu-sync/internal/usecase/materials/model/output"
+
 	"github.com/spf13/cobra"
 )
+
+const maxCoursesLimit = 10000
 
 func init() {
 	fetchCourseCmd.Flags().String("path", ".", "path to save the course data")
@@ -53,10 +60,32 @@ var fetchCourseCmd = &cobra.Command{
 		if dump {
 			basePath, _ := cmd.Flags().GetString("path")
 			courseDir := filepath.Join(basePath, sanitizeFilename(course.Name)+strconv.Itoa(courseID))
-			err = dumpCourse(ctx, client, course, courseDir)
+
+			fmt.Println("Downloading course materials...")
+
+			uc := materials.New(client, nil)
+			onEvent := func(event output.MaterialEvent) {
+				switch event.Type {
+				case output.EventSaved:
+					fmt.Printf("  saved: %s\n", event.Message)
+				case output.EventError:
+					fmt.Fprintf(os.Stderr, "  %s\n", event.Message)
+				case output.EventTheme, output.EventPDF, output.EventLink:
+					// skip verbose output in dump mode
+				}
+			}
+
+			result, err := uc.Download(ctx, input.DownloadInput{
+				CourseQuery: args[0],
+				BasePath:    courseDir,
+			}, onEvent)
 			if err != nil {
 				fmt.Printf("Failed to download course data: %v\n", err)
+				return
 			}
+
+			fmt.Printf("Download complete: %d/%d files to %s\n",
+				result.DownloadedFiles, result.TotalFiles, courseDir)
 		} else {
 			for _, theme := range course.Themes {
 				fmt.Printf("  %d. %s\n", theme.Order, theme.Name)
@@ -103,4 +132,19 @@ var fetchCoursesCmd = &cobra.Command{
 			fmt.Println()
 		}
 	},
+}
+
+// sanitizeFilename replaces invalid path characters.
+func sanitizeFilename(name string) string {
+	replacements := map[rune]rune{
+		'/': '-', '\\': '-', ':': '-', '*': '-',
+		'?': '-', '"': '-', '<': '-', '>': '-', '|': '-',
+	}
+	runes := []rune(name)
+	for i, r := range runes {
+		if replacement, ok := replacements[r]; ok {
+			runes[i] = replacement
+		}
+	}
+	return string(runes)
 }

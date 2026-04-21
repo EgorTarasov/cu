@@ -5,10 +5,11 @@ import (
 	"os"
 	"strconv"
 
+	"cu-sync/internal/usecase/task"
+	"cu-sync/internal/usecase/task/model/input"
+
 	"github.com/spf13/cobra"
 )
-
-const taskPercentMultiplier = 100
 
 var taskCmd = &cobra.Command{
 	Use:   "task <task-id>",
@@ -29,55 +30,49 @@ Examples:
 			os.Exit(1)
 		}
 
-		task, err := client.GetTask(ctx, taskID)
+		uc := task.New(client)
+		out, err := uc.Get(ctx, input.GetInput{TaskID: taskID})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to fetch task: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Task: %s\n", task.Exercise.Name)
-		fmt.Printf("Course: %s\n", task.Course.Name)
-		fmt.Printf("Theme: %s\n", task.Theme.Name)
+		fmt.Printf("Task: %s\n", out.ExerciseName)
+		fmt.Printf("Course: %s\n", out.CourseName)
+		fmt.Printf("Theme: %s\n", out.ThemeName)
 		fmt.Println()
 
-		fmt.Printf("State:    %s\n", stateLabel(task.State))
-		if task.Score != nil {
-			fmt.Printf("Score:    %.0f/%d\n", *task.Score, task.Exercise.MaxScore)
-		} else {
-			fmt.Printf("Score:    -/%d\n", task.Exercise.MaxScore)
-		}
-		fmt.Printf("Activity: %s (%.0f%%)\n",
-			task.Exercise.Activity.Name,
-			task.Exercise.Activity.Weight*taskPercentMultiplier)
+		fmt.Printf("State:    %s\n", out.StateLabel)
+		fmt.Printf("Score:    %s\n", out.ScoreFormatted)
+		fmt.Printf("Activity: %s (%.0f%%)\n", out.ActivityName, out.ActivityWeight)
 		fmt.Println()
 
 		fmt.Printf("Deadline: %s (%s left)\n",
-			task.Deadline.Format("02 Jan 2006 15:04"),
-			formatTimeLeft(task.Deadline),
+			out.Deadline.Format("02 Jan 2006 15:04"),
+			out.TimeLeft,
 		)
-		if task.StartedAt != nil {
-			fmt.Printf("Started:  %s\n", task.StartedAt.Format("02 Jan 2006 15:04"))
+		if out.StartedAt != nil {
+			fmt.Printf("Started:  %s\n", out.StartedAt.Format("02 Jan 2006 15:04"))
 		}
-		if task.SubmitAt != nil {
-			fmt.Printf("Submitted: %s\n", task.SubmitAt.Format("02 Jan 2006 15:04"))
+		if out.SubmitAt != nil {
+			fmt.Printf("Submitted: %s\n", out.SubmitAt.Format("02 Jan 2006 15:04"))
 		}
-		if task.RejectAt != nil {
-			fmt.Printf("Rejected: %s\n", task.RejectAt.Format("02 Jan 2006 15:04"))
+		if out.RejectAt != nil {
+			fmt.Printf("Rejected: %s\n", out.RejectAt.Format("02 Jan 2006 15:04"))
 		}
-		if task.EvaluateAt != nil {
-			fmt.Printf("Evaluated: %s\n", task.EvaluateAt.Format("02 Jan 2006 15:04"))
+		if out.EvaluateAt != nil {
+			fmt.Printf("Evaluated: %s\n", out.EvaluateAt.Format("02 Jan 2006 15:04"))
 		}
 		fmt.Println()
 
-		if task.Reviewer != nil {
-			fmt.Printf("Reviewer: %s %s (%s)\n",
-				task.Reviewer.FirstName, task.Reviewer.LastName, task.Reviewer.Email)
+		if out.ReviewerName != "" {
+			fmt.Printf("Reviewer: %s (%s)\n", out.ReviewerName, out.ReviewerEmail)
 		}
 
-		if task.Solution != nil && task.Solution.SolutionURL != "" {
-			fmt.Printf("Solution: %s\n", task.Solution.SolutionURL)
+		if out.SolutionURL != "" {
+			fmt.Printf("Solution: %s\n", out.SolutionURL)
 		}
 
-		fmt.Printf("\nLate days balance: %d\n", task.Student.LateDaysBalance)
+		fmt.Printf("\nLate days balance: %d\n", out.LateDaysBalance)
 	},
 }

@@ -2,13 +2,13 @@ package cli
 
 import (
 	"fmt"
-	"sort"
-	"time"
+
+	"cu-sync/internal/usecase/deadlines"
+	"cu-sync/internal/usecase/deadlines/model/input"
+	"cu-sync/internal/usecase/deadlines/model/output"
 
 	"github.com/spf13/cobra"
 )
-
-const deadlinesLimit = 100
 
 var deadlinesCmd = &cobra.Command{
 	Use:   "deadlines [course]",
@@ -26,73 +26,63 @@ Examples:
 		ctx := cmd.Context()
 		client := mustClient()
 
-		var courseID *int
-		var courseName string
-
+		in := input.ListInput{}
 		if len(args) > 0 {
-			id, name := mustResolveCourse(ctx, client, args[0])
-			courseID = &id
-			courseName = name
+			in.CourseQuery = args[0]
 		}
 
-		deadlines, err := client.GetDeadlines(ctx, deadlinesLimit, courseID)
+		uc := deadlines.New(client)
+		result, err := uc.List(ctx, in)
 		if err != nil {
 			fmt.Printf("Failed to fetch deadlines: %v\n", err)
 			return
 		}
 
-		if len(deadlines) == 0 {
-			fmt.Println("No upcoming deadlines!")
-			return
-		}
-
-		// Sort by deadline date.
-		sort.Slice(deadlines, func(i, j int) bool {
-			return deadlines[i].Deadline.Before(deadlines[j].Deadline)
-		})
-
-		if courseName != "" {
-			fmt.Printf("Deadlines: %s\n\n", courseName)
-		} else {
-			fmt.Println("All upcoming deadlines")
-			fmt.Println()
-		}
-
-		now := time.Now()
-		for _, dl := range deadlines {
-			timeLeft := formatTimeLeft(dl.Deadline)
-			state := stateLabel(dl.State)
-
-			// Urgency marker.
-			marker := " "
-			remaining := dl.Deadline.Sub(now)
-			switch {
-			case remaining < 0:
-				marker = "!"
-			case remaining < 24*time.Hour:
-				marker = "!"
-			case remaining < 3*24*time.Hour:
-				marker = "*"
-			}
-
-			fmt.Printf(" %s %-12s  %-8s  %s  %s\n",
-				marker,
-				state,
-				timeLeft,
-				dl.Deadline.Format("02 Jan 15:04"),
-				dl.Exercise.Name,
-			)
-
-			if courseID == nil {
-				fmt.Printf("   %s\n", dl.Course.Name)
-			}
-
-			if dl.Reviewer != nil {
-				fmt.Printf("   reviewer: %s %s\n", dl.Reviewer.FirstName, dl.Reviewer.LastName)
-			}
-		}
-
-		fmt.Printf("\n%d deadline(s) total\n", len(deadlines))
-		fmt.Println("  ! = overdue or <24h  * = <3 days")
+		printDeadlines(result)
 	},
+}
+
+func printDeadlines(result *output.ListOutput) {
+	if len(result.Items) == 0 {
+		fmt.Println("No upcoming deadlines!")
+		return
+	}
+
+	if result.CourseName != "" {
+		fmt.Printf("Deadlines: %s\n\n", result.CourseName)
+	} else {
+		fmt.Println("All upcoming deadlines")
+		fmt.Println()
+	}
+
+	for _, dl := range result.Items {
+		marker := " "
+		switch dl.Urgency {
+		case output.UrgencyUrgent:
+			marker = "!"
+		case output.UrgencySoon:
+			marker = "*"
+		case output.UrgencyNormal:
+			// no marker
+		}
+
+		fmt.Printf(" %s %-12s  %-8s  %s  %s\n",
+			marker,
+			dl.StateLabel,
+			dl.TimeLeft,
+			dl.Deadline.Format("02 Jan 15:04"),
+			dl.ExerciseName,
+		)
+
+		if result.CourseName == "" {
+			fmt.Printf("   %s\n", dl.CourseName)
+		}
+
+		if dl.ReviewerName != "" {
+			fmt.Printf("   reviewer: %s\n", dl.ReviewerName)
+		}
+	}
+
+	fmt.Printf("\n%d deadline(s) total\n", len(result.Items))
+	fmt.Println("  ! = overdue or <24h  * = <3 days")
 }

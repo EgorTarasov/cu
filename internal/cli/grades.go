@@ -3,13 +3,16 @@ package cli
 import (
 	"fmt"
 	"os"
-	"strings"
+
+	"cu-sync/internal/format"
+	"cu-sync/internal/usecase/grades"
+	"cu-sync/internal/usecase/grades/model/input"
+	"cu-sync/internal/usecase/grades/model/output"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-	percentMultiplier   = 100
 	gradeNameWidth      = 50
 	gradeProgressBarLen = 20
 )
@@ -28,126 +31,87 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		client := mustClient()
+		uc := grades.New(client)
 
 		if len(args) == 0 {
-			// Summary across all courses.
-			courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
+			result, err := uc.Summary(ctx, input.SummaryInput{})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to fetch courses: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
 				return
 			}
-
-			fmt.Println("Grades summary")
-			fmt.Println()
-			for _, course := range courses.Items {
-				progress, err := client.GetCourseProgress(ctx, course.ID)
-				if err != nil {
-					fmt.Printf("  %-50s  (error)\n", course.Name)
-					continue
-				}
-				bar := progressBar(progress.EarnedScore, progress.MaxScore, gradeProgressBarLen)
-				fmt.Printf("  %-50s  %s %.1f/%.0f\n",
-					truncate(course.Name, gradeNameWidth),
-					bar,
-					progress.EarnedScore,
-					progress.MaxScore,
-				)
-			}
-			fmt.Println("\nUse: cu grades <course> for detailed view")
+			printSummary(result)
 			return
 		}
 
-		// Detailed grades for a specific course.
-		courseID, courseName := mustResolveCourse(ctx, client, args[0])
-		fmt.Printf("Grades: %s\n\n", courseName)
-
-		// Fetch activities performance (weighted breakdown).
-		ap, err := client.GetActivitiesPerformance(ctx, courseID)
+		result, err := uc.Detailed(ctx, input.DetailedInput{CourseQuery: args[0]})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch performance: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
 			return
 		}
-
-		fmt.Println("Activity breakdown:")
-		for _, item := range ap.Items {
-			blocker := ""
-			if item.IsBlocker {
-				blocker = " [BLOCKER]"
-			}
-			weight := ""
-			if item.Activity.Weight > 0 {
-				weight = fmt.Sprintf(" (%.0f%%)", item.Activity.Weight*percentMultiplier)
-			}
-			fmt.Printf("  %-35s  avg=%.1f  total=%.1f%s%s\n",
-				item.Activity.Name+weight,
-				item.Average,
-				item.Total,
-				blocker,
-				"",
-			)
-		}
-		fmt.Printf("\n  Total score: %.1f\n\n", ap.TotalScore)
-
-		// Fetch per-exercise scores.
-		sp, err := client.GetStudentPerformance(ctx, courseID)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch scores: %v\n", err)
-			return
-		}
-
-		// Fetch exercises to get names.
-		exercises, err := client.GetCourseExercises(ctx, courseID)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch exercises: %v\n", err)
-			return
-		}
-		nameByExerciseID := make(map[int]string)
-		for _, ex := range exercises.Exercises {
-			nameByExerciseID[ex.ID] = ex.Name
-		}
-
-		fmt.Println("Tasks:")
-		for _, task := range sp.Tasks {
-			name := nameByExerciseID[task.ExerciseID]
-			if name == "" {
-				name = fmt.Sprintf("exercise#%d", task.ExerciseID)
-			}
-			score := "  -"
-			if task.Score != nil {
-				score = fmt.Sprintf("%3.0f", *task.Score)
-			}
-			fmt.Printf("  %-12s  %s/%d  %s\n",
-				stateLabel(task.State),
-				score,
-				task.MaxScore,
-				name,
-			)
-		}
-
-		if len(sp.Blockers) > 0 {
-			fmt.Println("\nBlockers:")
-			for _, b := range sp.Blockers {
-				fmt.Printf("  %s (need avg >= %.0f)\n", b.ActivityName, b.AverageScoreThreshold)
-			}
-		}
+		printDetailed(result)
 	},
 }
 
-func progressBar(value, maxVal float64, width int) string {
-	if maxVal == 0 {
-		return "[" + strings.Repeat("-", width) + "]"
+func printSummary(result *output.SummaryOutput) {
+	fmt.Println("Grades summary")
+	fmt.Println()
+	for _, item := range result.Items {
+		if item.Error != nil {
+			fmt.Printf("  %-50s  (error)\n", item.CourseName)
+			continue
+		}
+		bar := format.ProgressBar(item.EarnedScore, item.MaxScore, gradeProgressBarLen)
+		fmt.Printf("  %-50s  %s %.1f/%.0f\n",
+			format.Truncate(item.CourseName, gradeNameWidth),
+			bar,
+			item.EarnedScore,
+			item.MaxScore,
+		)
 	}
-	filled := int(value / maxVal * float64(width))
-	if filled > width {
-		filled = width
-	}
-	return "[" + strings.Repeat("#", filled) + strings.Repeat("-", width-filled) + "]"
+	fmt.Println("\nUse: cu grades <course> for detailed view")
 }
 
-func truncate(s string, n int) string {
-	runes := []rune(s)
-	if len(runes) <= n {
-		return s
+func printDetailed(result *output.DetailedOutput) {
+	fmt.Printf("Grades: %s\n\n", result.CourseName)
+
+	fmt.Println("Activity breakdown:")
+	for _, item := range result.Activities {
+		blocker := ""
+		if item.IsBlocker {
+			blocker = " [BLOCKER]"
+		}
+		weight := ""
+		if item.Weight > 0 {
+			weight = fmt.Sprintf(" (%.0f%%)", item.Weight)
+		}
+		fmt.Printf("  %-35s  avg=%.1f  total=%.1f%s%s\n",
+			item.Name+weight,
+			item.Average,
+			item.Total,
+			blocker,
+			"",
+		)
 	}
-	return string(runes[:n-1]) + "…"
+	fmt.Printf("\n  Total score: %.1f\n\n", result.TotalScore)
+
+	fmt.Println("Tasks:")
+	for _, t := range result.Tasks {
+		score := "  -"
+		if t.Score != nil {
+			score = fmt.Sprintf("%3.0f", *t.Score)
+		}
+		fmt.Printf("  %-12s  %s/%d  %s\n",
+			t.StateLabel,
+			score,
+			t.MaxScore,
+			t.Name,
+		)
+	}
+
+	if len(result.Blockers) > 0 {
+		fmt.Println("\nBlockers:")
+		for _, b := range result.Blockers {
+			fmt.Printf("  %s (need avg >= %.0f)\n", b.ActivityName, b.Threshold)
+		}
+	}
 }

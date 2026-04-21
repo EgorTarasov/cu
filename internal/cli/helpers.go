@@ -1,20 +1,10 @@
 package cli
 
 import (
-	"context"
 	"fmt"
-	"math"
 	"os"
-	"strings"
-	"time"
 
 	"cu-sync/internal/cu"
-)
-
-const (
-	hoursPerDay     = 24
-	minutesPerHour  = 60
-	maxCoursesLimit = 10000
 )
 
 // mustClient creates an authenticated client or exits.
@@ -28,64 +18,4 @@ func mustClient() *cu.Client {
 		os.Exit(1)
 	}
 	return client
-}
-
-// mustResolveCourse resolves a course query (ID or name substring) or exits.
-func mustResolveCourse(ctx context.Context, client *cu.Client, query string) (int, string) {
-	id, name, err := client.ResolveCourse(ctx, query)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	return id, name
-}
-
-// formatTimeLeft returns a human-readable duration until the given time.
-func formatTimeLeft(t time.Time) string {
-	d := time.Until(t)
-	if d < 0 {
-		return "OVERDUE"
-	}
-	days := int(d.Hours() / hoursPerDay)
-	hours := int(math.Mod(d.Hours(), hoursPerDay))
-	if days > 0 {
-		return fmt.Sprintf("%dd %dh", days, hours)
-	}
-	if hours > 0 {
-		return fmt.Sprintf("%dh %dm", hours, int(math.Mod(d.Minutes(), minutesPerHour)))
-	}
-	return fmt.Sprintf("%dm", int(d.Minutes()))
-}
-
-// stateLabel returns a short colored label for a task/deadline state.
-func stateLabel(state string) string {
-	switch state {
-	case "backlog":
-		return "TODO"
-	case "inProgress":
-		return "IN PROGRESS"
-	case "submitted":
-		return "SUBMITTED"
-	case "evaluated":
-		return "DONE"
-	case "failed":
-		return "FAILED"
-	default:
-		return strings.ToUpper(state)
-	}
-}
-
-// sanitizeFilename replaces invalid path characters.
-func sanitizeFilename(name string) string {
-	replacements := map[rune]rune{
-		'/': '-', '\\': '-', ':': '-', '*': '-',
-		'?': '-', '"': '-', '<': '-', '>': '-', '|': '-',
-	}
-	runes := []rune(name)
-	for i, r := range runes {
-		if replacement, ok := replacements[r]; ok {
-			runes[i] = replacement
-		}
-	}
-	return string(runes)
 }

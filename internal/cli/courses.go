@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 
+	"cu-sync/internal/usecase/courses"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,14 +16,15 @@ var coursesCmd = &cobra.Command{
 		ctx := cmd.Context()
 		client := mustClient()
 
-		courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
+		uc := courses.New(client)
+		result, err := uc.List(ctx)
 		if err != nil {
 			fmt.Printf("Failed to fetch courses: %v\n", err)
 			return
 		}
 
-		fmt.Printf("Your courses (%d)\n\n", len(courses.Items))
-		for i, course := range courses.Items {
+		fmt.Printf("Your courses (%d)\n\n", len(result.Items))
+		for i, course := range result.Items {
 			fmt.Printf("  %d. [%d] %s\n", i+1, course.ID, course.Name)
 		}
 		fmt.Println("\nUse course ID or name with other commands:")
