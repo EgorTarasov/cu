@@ -1,10 +1,6 @@
 name: E2E Tests
 
 on:
-  push:
-    branches: [main, develop, feature/materials]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
