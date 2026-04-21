@@ -2,6 +2,7 @@ package cu
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,7 +38,14 @@ func NewClient(bffCookie string) *Client {
 func NewClientFromEnv() (*Client, error) {
 	bffCookie := os.Getenv("CU_BFF_COOKIE")
 	if bffCookie == "" {
-		return nil, errors.New("CU_BFF_COOKIE environment variable is required")
+		saved, err := LoadCookie()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load saved cookie: %w", err)
+		}
+		bffCookie = saved
+	}
+	if bffCookie == "" {
+		return nil, errors.New("no authentication found. Run 'cu login' or set CU_BFF_COOKIE")
 	}
 
 	return NewClient(bffCookie), nil
