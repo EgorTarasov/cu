@@ -1,6 +1,10 @@
 package command
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/EgorTarasov/cu/internal/update"
+
+	"github.com/spf13/cobra"
+)
 
 var RootCmd = &cobra.Command{
 	Use:   "cu",
@@ -9,4 +13,7 @@ var RootCmd = &cobra.Command{
 It provides access to courses, authentication, and data synchronization.`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
+	PersistentPostRun: func(_ *cobra.Command, _ []string) {
+		update.CheckForUpdate()
+	},
 }
