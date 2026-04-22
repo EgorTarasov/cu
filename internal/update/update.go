@@ -1,6 +1,7 @@
 package update
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,9 +15,16 @@ import (
 )
 
 const (
+	versionSegments = 3
+	httpTimeout     = 3 * time.Second
+)
+
+const (
 	repoAPI       = "https://api.github.com/repos/EgorTarasov/cu/releases/latest"
 	checkInterval = 7 * 24 * time.Hour
 	stateFile     = "update-check"
+	updateCmd     = "Обновите командой:\n" +
+		"  curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh\n\n"
 )
 
 type githubRelease struct {
@@ -64,8 +72,15 @@ func CheckForUpdate() {
 
 	touchStateFile()
 
-	client := &http.Client{Timeout: 3 * time.Second}
-	resp, err := client.Get(repoAPI)
+	ctx, cancel := context.WithTimeout(context.Background(), httpTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, repoAPI, nil)
+	if err != nil {
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -96,14 +111,14 @@ func CheckForUpdate() {
 	if runtime.GOOS == "windows" {
 		fmt.Fprintf(os.Stderr, "Скачайте обновление: %s\n\n", release.HTMLURL)
 	} else {
-		fmt.Fprintf(os.Stderr, "Обновите командой:\n  curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh\n\n")
+		fmt.Fprint(os.Stderr, updateCmd)
 	}
 }
 
 func isNewer(a, b string) bool {
 	pa := splitVersion(a)
 	pb := splitVersion(b)
-	for i := range 3 {
+	for i := range versionSegments {
 		if pa[i] != pb[i] {
 			return pa[i] > pb[i]
 		}
@@ -111,16 +126,16 @@ func isNewer(a, b string) bool {
 	return false
 }
 
-func splitVersion(v string) [3]int {
-	var parts [3]int
-	segments := strings.SplitN(v, ".", 3)
+func splitVersion(v string) [versionSegments]int {
+	var parts [versionSegments]int
+	segments := strings.SplitN(v, ".", versionSegments)
 	for i, s := range segments {
-		if i >= 3 {
+		if i >= versionSegments {
 			break
 		}
 		for _, c := range s {
 			if c >= '0' && c <= '9' {
-				parts[i] = parts[i]*10 + int(c-'0')
+				parts[i] = parts[i]*10 + int(c-'0') //nolint:gosec // simple digit parsing, no overflow risk
 			} else {
 				break
 			}
