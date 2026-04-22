@@ -7,20 +7,35 @@
 
 ## Установка
 
+### Быстрая установка (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
+```
+
+Скрипт автоматически определит ОС и архитектуру, скачает последнюю версию, проверит контрольную сумму и установит бинарник в `/usr/local/bin/cu`.
+
+Можно указать другую директорию для установки:
+
+```bash
+INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
+```
+
+### Windows
+
+Скачайте `.exe` из [последнего релиза](https://github.com/EgorTarasov/cu/releases/latest) и добавьте в `PATH`.
+
 ### Из исходного кода
 
 ```bash
-git clone <repository-url>
-cd cu_sync
+git clone https://github.com/EgorTarasov/cu.git
+cd cu
 go build -o cu ./cmd/cli
 ```
 
 ### Быстрый старт
 
 ```bash
-# Переместите исполняемый файл в PATH (опционально)
-sudo mv cu /usr/local/bin/
-
 # Проверьте установку
 cu --help
 ```
