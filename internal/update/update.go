@@ -49,8 +49,8 @@ func touchStateFile() {
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(filepath.Dir(path), 0o755)
-	_ = os.WriteFile(path, nil, 0o644)
+	_ = os.MkdirAll(filepath.Dir(path), 0o750)
+	_ = os.WriteFile(path, nil, 0o600)
 }
 
 func CheckForUpdate() {
