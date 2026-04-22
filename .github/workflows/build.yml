@@ -30,9 +30,27 @@ jobs:
           - goos: linux
             goarch: amd64
             suffix: linux-amd64
+            ext: ""
+          - goos: linux
+            goarch: arm64
+            suffix: linux-arm64
+            ext: ""
+          - goos: darwin
+            goarch: amd64
+            suffix: darwin-amd64
+            ext: ""
           - goos: darwin
             goarch: arm64
             suffix: darwin-arm64
+            ext: ""
+          - goos: windows
+            goarch: amd64
+            suffix: windows-amd64
+            ext: ".exe"
+          - goos: windows
+            goarch: arm64
+            suffix: windows-arm64
+            ext: ".exe"
 
     steps:
       - name: Check out code
@@ -73,7 +91,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          BINARY_NAME="cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}"
+          BINARY_NAME="cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}${{ matrix.ext }}"
           echo "Building $BINARY_NAME"
           go build -ldflags="-s -w -X main.ver=${{ steps.version.outputs.VERSION }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o "$BINARY_NAME" ./cmd/cli
 
@@ -93,7 +111,9 @@ jobs:
           name: cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}
           path: |
             cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}*
-          retention-days: 90 # Create release if this is a tag push
+          retention-days: 90
+
+  # Create release if this is a tag push
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -124,6 +144,7 @@ jobs:
           find ./artifacts -name "cu-*" -type f | while read file; do
             cp "$file" ./release-assets/
           done
+          cp install.sh ./release-assets/
           ls -la ./release-assets/
 
       - name: Generate release notes from PR
