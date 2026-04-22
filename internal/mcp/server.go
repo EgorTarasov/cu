@@ -6,6 +6,7 @@ import (
 	"cu-sync/internal/mcp/tool/downloadmaterials"
 	"cu-sync/internal/mcp/tool/readmaterial"
 	searchCourses "cu-sync/internal/mcp/tool/searchcourses"
+	"cu-sync/internal/version"
 
 	"cu-sync/internal/gateway/cu"
 	"cu-sync/internal/mcp/tool/deadlines"
@@ -17,7 +18,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// LMSClient combines all LMS API methods needed by MCP tools.
 type LMSClient interface {
 	GetStudentCourses(ctx context.Context, limit int, state string) (*cu.StudentCoursesResponse, error)
 	ResolveCourse(ctx context.Context, query string) (int, string, error)
@@ -32,26 +32,23 @@ type LMSClient interface {
 	DownloadFile(ctx context.Context, material cu.Material, destDir string) (string, error)
 }
 
-// GitLabClient provides GitLab file access.
 type GitLabClient interface {
 	GetRawFile(ctx context.Context, project, ref, filePath string) ([]byte, error)
 	DownloadGitLabLink(ctx context.Context, link, destDir string) ([]string, error)
 }
 
-// Server wraps an MCP server with LMS and GitLab clients.
 type Server struct {
 	lms    LMSClient
 	gitlab GitLabClient
 	srv    *mcp.Server
 }
 
-// NewServer creates an MCP server with all CU tools registered.
 func NewServer(lms LMSClient, gitlab GitLabClient) *Server {
 	s := &Server{lms: lms, gitlab: gitlab}
 
 	s.srv = mcp.NewServer(&mcp.Implementation{
 		Name:    "cu-university",
-		Version: "1.0.0",
+		Version: version.Version,
 	}, nil)
 
 	s.registerTools()
@@ -59,7 +56,6 @@ func NewServer(lms LMSClient, gitlab GitLabClient) *Server {
 	return s
 }
 
-// Run starts the MCP server on stdio transport.
 func (s *Server) Run(ctx context.Context) error {
 	return s.srv.Run(ctx, &mcp.StdioTransport{})
 }

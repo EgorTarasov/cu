@@ -58,7 +58,7 @@ var fetchCourseCmd = &cobra.Command{
 
 		if dump {
 			basePath, _ := cmd.Flags().GetString("path")
-			courseDir := filepath.Join(basePath, sanitizeFilename(course.Name)+strconv.Itoa(courseID))
+			courseDir := filepath.Join(basePath, materials.SanitizeFilename(course.Name)+strconv.Itoa(courseID))
 
 			fmt.Println("Downloading course materials...")
 
@@ -131,19 +131,4 @@ var fetchCoursesCmd = &cobra.Command{
 			fmt.Println()
 		}
 	},
-}
-
-// sanitizeFilename replaces invalid path characters.
-func sanitizeFilename(name string) string {
-	replacements := map[rune]rune{
-		'/': '-', '\\': '-', ':': '-', '*': '-',
-		'?': '-', '"': '-', '<': '-', '>': '-', '|': '-',
-	}
-	runes := []rune(name)
-	for i, r := range runes {
-		if replacement, ok := replacements[r]; ok {
-			runes[i] = replacement
-		}
-	}
-	return string(runes)
 }

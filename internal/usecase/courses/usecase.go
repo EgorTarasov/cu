@@ -9,17 +9,14 @@ import (
 
 const maxCoursesLimit = 10000
 
-// UseCase implements the courses business logic.
 type UseCase struct {
 	lms LMSClient
 }
 
-// New creates a new courses usecase.
 func New(lms LMSClient) *UseCase {
 	return &UseCase{lms: lms}
 }
 
-// List fetches all published courses for the student.
 func (uc *UseCase) List(ctx context.Context) (*model.CoursesListOutput, error) {
 	courses, err := uc.lms.GetStudentCourses(ctx, maxCoursesLimit, "published")
 	if err != nil {

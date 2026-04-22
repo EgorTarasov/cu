@@ -100,7 +100,7 @@ func printDetailed(result *model.GradesDetailedOutput) {
 			score = fmt.Sprintf("%3.0f", *t.Score)
 		}
 		fmt.Printf("  %-12s  %s/%d  %s\n",
-			t.StateLabel,
+			t.State.Label(),
 			score,
 			t.MaxScore,
 			t.Name,

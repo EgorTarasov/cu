@@ -1,6 +1,5 @@
 package model
 
-// MaterialsDownloadInput is the input for downloading course materials.
 type MaterialsDownloadInput struct {
 	CourseQuery string
 	WeekFilter  int
@@ -8,7 +7,6 @@ type MaterialsDownloadInput struct {
 	BasePath    string
 }
 
-// MaterialEventType identifies the kind of material event.
 type MaterialEventType string
 
 const (
@@ -19,14 +17,12 @@ const (
 	MaterialEventError MaterialEventType = "error"
 )
 
-// MaterialEvent represents a single event during material download.
 type MaterialEvent struct {
 	Type     MaterialEventType
 	Message  string
 	FilePath string
 }
 
-// MaterialsDownloadOutput summarises the download results.
 type MaterialsDownloadOutput struct {
 	TotalFiles      int32
 	DownloadedFiles int32

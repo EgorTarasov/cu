@@ -17,21 +17,17 @@ const (
 	bytesPerKB          = 1024
 )
 
-// EventCallback is called for each material event during download.
 type EventCallback func(event model.MaterialEvent)
 
-// UseCase implements the materials business logic.
 type UseCase struct {
 	lms    LMSClient
-	gitlab GitLabDownloader // may be nil
+	gitlab GitLabDownloader
 }
 
-// New creates a new materials usecase.
 func New(lms LMSClient, gitlab GitLabDownloader) *UseCase {
 	return &UseCase{lms: lms, gitlab: gitlab}
 }
 
-// Download fetches course materials and emits events via the callback.
 func (uc *UseCase) Download(
 	ctx context.Context,
 	in model.MaterialsDownloadInput,
@@ -58,14 +54,14 @@ func (uc *UseCase) Download(
 	}
 
 	for _, theme := range overview.Themes {
-		if in.WeekFilter > 0 && !matchesWeek(theme.Name, in.WeekFilter) {
+		if in.WeekFilter > 0 && !MatchesWeek(theme.Name, in.WeekFilter) {
 			continue
 		}
 
 		onEvent(model.MaterialEvent{Type: model.MaterialEventTheme, Message: theme.Name})
 
-		themeDir := filepath.Join(in.BasePath, sanitizeFilename(courseName),
-			fmt.Sprintf("%02d-%s", theme.Order, sanitizeFilename(theme.Name)))
+		themeDir := filepath.Join(in.BasePath, SanitizeFilename(courseName),
+			fmt.Sprintf("%02d-%s", theme.Order, SanitizeFilename(theme.Name)))
 
 		for _, lr := range theme.Longreads {
 			uc.processLongread(ctx, lr.ID, lr.Name, themeDir, in.LinksOnly, g, &totalFiles, &downloaded, onEvent)
@@ -158,7 +154,7 @@ func (uc *UseCase) processMarkdown(
 	totalFiles, downloaded *atomic.Int32,
 	onEvent EventCallback,
 ) {
-	links := extractLinks(viewContent)
+	links := ExtractLinks(viewContent)
 	for _, link := range links {
 		if !linksOnly && uc.gitlab != nil && cu2.IsGitLabLink(link) {
 			totalFiles.Add(1)
