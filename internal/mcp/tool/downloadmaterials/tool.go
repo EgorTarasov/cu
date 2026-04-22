@@ -67,10 +67,10 @@ func NewHandler(lms LMSClient, gitlab GitLabClient) func(context.Context, *mcp.C
 
 		var b strings.Builder
 		b.WriteString("## Download Complete\n\n")
-		b.WriteString(fmt.Sprintf("Downloaded %d/%d files to `%s`\n\n", result.DownloadedFiles, result.TotalFiles, in.Path))
+		fmt.Fprintf(&b, "Downloaded %d/%d files to `%s`\n\n", result.DownloadedFiles, result.TotalFiles, in.Path)
 
 		for _, e := range events {
-			b.WriteString(fmt.Sprintf("- %s\n", e))
+			fmt.Fprintf(&b, "- %s\n", e)
 		}
 
 		return textResult(b.String()), nil, nil

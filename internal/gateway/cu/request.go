@@ -39,7 +39,7 @@ func (c *Client) prepareRequest(ctx context.Context, method, endpoint string) (*
 }
 
 func (c *Client) executeRequest(req *http.Request) (*http.Response, error) {
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req) //nolint:gosec // G704: URL is built from validated base URL
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}

@@ -67,8 +67,6 @@ var allowedHosts = map[string]bool{
 	"git.culab.ru":            true,
 }
 
-// SetBaseURL sets the base URL after validating it against the allowed hosts.
-// Returns false if the URL is invalid or the host is not in the allowlist.
 func (c *Client) SetBaseURL(baseURL string) bool {
 	u, err := url.Parse(baseURL)
 	if err != nil || !allowedHosts[u.Hostname()] {
@@ -78,7 +76,6 @@ func (c *Client) SetBaseURL(baseURL string) bool {
 	return true
 }
 
-// setBaseURL sets the base URL without host validation (used in tests).
 func (c *Client) setBaseURL(baseURL string) {
 	c.baseURL = baseURL
 }

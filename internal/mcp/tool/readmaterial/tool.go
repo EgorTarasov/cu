@@ -109,11 +109,12 @@ func fetchGitContent(ctx context.Context, gitlab GitLabClient, links []string) s
 
 		data, err := gitlab.GetRawFile(ctx, project, ref, path)
 		if err != nil {
-			b.WriteString(fmt.Sprintf("<!-- Error fetching %s: %v -->\n\n", link, err))
+			_, _ = fmt.Fprintf(&b, "Error: %v", err)
+			fmt.Fprintf(&b, "<!-- Error fetching %s: %v -->\n\n", link, err)
 			continue
 		}
 
-		b.WriteString(fmt.Sprintf("---\n## Source: %s\n\n", link))
+		fmt.Fprintf(&b, "---\n## Source: %s\n\n", link)
 		b.Write(data)
 		b.WriteString("\n\n")
 	}
