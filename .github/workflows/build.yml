@@ -75,7 +75,7 @@ jobs:
         run: |
           BINARY_NAME="cu-${{ steps.version.outputs.VERSION }}-${{ matrix.suffix }}"
           echo "Building $BINARY_NAME"
-          go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o "$BINARY_NAME" ./cmd/cli
+          go build -ldflags="-s -w -X main.ver=${{ steps.version.outputs.VERSION }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o "$BINARY_NAME" ./cmd/cli
 
           # Create checksum
           if command -v sha256sum >/dev/null 2>&1; then
@@ -99,17 +99,22 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+      pull-requests: read
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get version
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: ./artifacts
 
@@ -121,39 +126,19 @@ jobs:
           done
           ls -la ./release-assets/
 
-      - name: Generate release notes
+      - name: Generate release notes from PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "# CU CLI ${{ steps.version.outputs.VERSION }}" > RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## Downloads" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "Choose the appropriate binary for your operating system and architecture:" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "### Linux" >> RELEASE_NOTES.md
-          echo "- **AMD64**: \`cu-${{ steps.version.outputs.VERSION }}-linux-amd64\`" >> RELEASE_NOTES.md
-          echo "- **ARM64**: \`cu-${{ steps.version.outputs.VERSION }}-linux-arm64\`" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "### macOS" >> RELEASE_NOTES.md
-          echo "- **Intel (AMD64)**: \`cu-${{ steps.version.outputs.VERSION }}-darwin-amd64\`" >> RELEASE_NOTES.md
-          echo "- **Apple Silicon (ARM64)**: \`cu-${{ steps.version.outputs.VERSION }}-darwin-arm64\`" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "### Windows" >> RELEASE_NOTES.md
-          echo "- **AMD64**: \`cu-${{ steps.version.outputs.VERSION }}-windows-amd64.exe\`" >> RELEASE_NOTES.md
-          echo "- **ARM64**: \`cu-${{ steps.version.outputs.VERSION }}-windows-arm64.exe\`" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## Installation" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "1. Download the appropriate binary for your system" >> RELEASE_NOTES.md
-          echo "2. Make it executable (Linux/macOS): \`chmod +x cu-*\`" >> RELEASE_NOTES.md
-          echo "3. Move to your PATH: \`sudo mv cu-* /usr/local/bin/cu\`" >> RELEASE_NOTES.md
-          echo "4. Verify installation: \`cu --help\`" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## Verification" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "Each binary includes a SHA256 checksum file. Verify your download:" >> RELEASE_NOTES.md
-          echo "\`\`\`bash" >> RELEASE_NOTES.md
-          echo "sha256sum -c cu-${{ steps.version.outputs.VERSION }}-*.sha256" >> RELEASE_NOTES.md
-          echo "\`\`\`" >> RELEASE_NOTES.md
+          # Find the merged PR associated with the tagged commit
+          COMMIT=$(git rev-list -n 1 "${{ steps.version.outputs.VERSION }}")
+          PR_BODY=$(gh pr list --state merged --search "$COMMIT" --json body --jq '.[0].body // empty')
+
+          if [ -n "$PR_BODY" ]; then
+            echo "$PR_BODY" > RELEASE_NOTES.md
+          else
+            echo "Release ${{ steps.version.outputs.VERSION }}" > RELEASE_NOTES.md
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

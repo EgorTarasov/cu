@@ -5,7 +5,6 @@ import (
 	"cu-sync/internal/gateway/cu"
 )
 
-// LMSClient defines the subset of the LMS API needed by the grades usecase.
 type LMSClient interface {
 	ResolveCourse(ctx context.Context, query string) (int, string, error)
 	GetStudentCourses(ctx context.Context, limit int, state string) (*cu.StudentCoursesResponse, error)

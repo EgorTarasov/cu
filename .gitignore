@@ -39,3 +39,4 @@ coverage.html
 .env.local
 
 requests/
+.playwright-mcp

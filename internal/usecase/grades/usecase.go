@@ -2,10 +2,8 @@ package grades
 
 import (
 	"context"
-	"fmt"
-	"strings"
-
 	"cu-sync/internal/model"
+	"fmt"
 )
 
 const (
@@ -97,11 +95,10 @@ func (uc *UseCase) Detailed(ctx context.Context, in model.GradesDetailedInput) (
 		}
 
 		tasks = append(tasks, model.TaskGrade{
-			Name:       name,
-			State:      t.State,
-			StateLabel: stateLabel(t.State),
-			Score:      t.Score,
-			MaxScore:   t.MaxScore,
+			Name:     name,
+			State:    model.TaskState(t.State),
+			Score:    t.Score,
+			MaxScore: t.MaxScore,
 		})
 	}
 
@@ -120,21 +117,4 @@ func (uc *UseCase) Detailed(ctx context.Context, in model.GradesDetailedInput) (
 		Tasks:      tasks,
 		Blockers:   blockers,
 	}, nil
-}
-
-func stateLabel(state string) string {
-	switch state {
-	case "backlog":
-		return "TODO"
-	case "inProgress":
-		return "IN PROGRESS"
-	case "submitted":
-		return "SUBMITTED"
-	case "evaluated":
-		return "DONE"
-	case "failed":
-		return "FAILED"
-	default:
-		return strings.ToUpper(state)
-	}
 }

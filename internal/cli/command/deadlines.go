@@ -56,7 +56,7 @@ func printDeadlines(result *model.DeadlinesListOutput) {
 
 	for _, dl := range result.Items {
 		marker := " "
-		switch dl.Urgency {
+		switch dl.Deadline.Urgency() {
 		case model.UrgencyUrgent:
 			marker = "!"
 		case model.UrgencySoon:
@@ -68,8 +68,8 @@ func printDeadlines(result *model.DeadlinesListOutput) {
 		fmt.Printf(" %s %-12s  %-8s  %s  %s\n",
 			marker,
 			dl.StateLabel,
-			dl.TimeLeft,
-			dl.Deadline.Format("02 Jan 15:04"),
+			dl.Deadline.TimeLeft(),
+			dl.Deadline.Format(model.DateTimeShortFormat),
 			dl.ExerciseName,
 		)
 
@@ -77,8 +77,8 @@ func printDeadlines(result *model.DeadlinesListOutput) {
 			fmt.Printf("   %s\n", dl.CourseName)
 		}
 
-		if dl.ReviewerName != "" {
-			fmt.Printf("   reviewer: %s\n", dl.ReviewerName)
+		if dl.Reviewer != nil {
+			fmt.Printf("   reviewer: %s\n", dl.Reviewer.FullName())
 		}
 	}
 

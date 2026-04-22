@@ -1,0 +1,47 @@
+name: Auto Tag
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if already tagged
+        id: check
+        run: |
+          if git describe --exact-match HEAD 2>/dev/null; then
+            echo "SKIP=true" >> "$GITHUB_OUTPUT"
+            echo "HEAD already tagged, skipping"
+          else
+            echo "SKIP=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute next patch version
+        if: steps.check.outputs.SKIP == 'false'
+        id: next
+        run: |
+          LATEST=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$LATEST" ]; then
+            NEW="v0.1.0"
+          else
+            # Only bump patch — major.minor are set manually via GitHub releases
+            NEW=$(echo "$LATEST" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
+          fi
+          echo "VERSION=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEW"
+
+      - name: Create and push tag
+        if: steps.check.outputs.SKIP == 'false'
+        run: |
+          git tag "${{ steps.next.outputs.VERSION }}"
+          git push origin "${{ steps.next.outputs.VERSION }}"

@@ -2,18 +2,11 @@ package format
 
 import (
 	"fmt"
-	"math"
-	"regexp"
 	"strings"
-	"time"
 
 	"cu-sync/internal/gateway/cu"
 	"cu-sync/internal/model"
-)
-
-const (
-	hoursPerDay    = 24
-	minutesPerHour = 60
+	materialsUC "cu-sync/internal/usecase/materials"
 )
 
 func CoursesList(courses []cu.StudentCourse) string {
@@ -72,7 +65,7 @@ func CourseStructure(overview *cu.CourseOverview) string {
 			for _, ex := range lr.Exercises {
 				dl := ""
 				if ex.Deadline != nil {
-					dl = fmt.Sprintf(", deadline %s", ex.Deadline.Format("02 Jan 15:04"))
+					dl = fmt.Sprintf(", deadline %s", ex.Deadline.Format(model.DateTimeShortFormat))
 				}
 				b.WriteString(fmt.Sprintf("  - %s — max %d%s\n", ex.Name, ex.MaxScore, dl))
 			}
@@ -106,7 +99,7 @@ func Deadlines(result *model.DeadlinesListOutput) string {
 	for _, dl := range result.Items {
 		icon := "⚪"
 
-		switch dl.Urgency {
+		switch dl.Deadline.Urgency() {
 		case model.UrgencyUrgent:
 			icon = "🔴"
 			urgent++
@@ -118,8 +111,8 @@ func Deadlines(result *model.DeadlinesListOutput) string {
 		}
 
 		b.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s | %s |\n",
-			icon, dl.StateLabel, dl.TimeLeft,
-			dl.Deadline.Format("02 Jan 15:04"),
+			icon, dl.StateLabel, dl.Deadline.TimeLeft(),
+			dl.Deadline.Format(model.DateTimeShortFormat),
 			dl.ExerciseName, dl.CourseName,
 		))
 	}
@@ -184,7 +177,7 @@ func GradesDetailed(result *model.GradesDetailedOutput) string {
 			score = fmt.Sprintf("%.0f", *t.Score)
 		}
 		b.WriteString(fmt.Sprintf("| %s | %s/%d | %s |\n",
-			t.StateLabel, score, t.MaxScore, t.Name))
+			t.State.Label(), score, t.MaxScore, t.Name))
 	}
 
 	if len(result.Blockers) > 0 {
@@ -197,48 +190,42 @@ func GradesDetailed(result *model.GradesDetailedOutput) string {
 	return b.String()
 }
 
-func Task(t *cu.Task) string {
+func Task(t *model.TaskOutput) string {
 	var b strings.Builder
 
-	b.WriteString(fmt.Sprintf("## Task: %s\n\n", t.Exercise.Name))
-	b.WriteString(fmt.Sprintf("**Course:** %s\n", t.Course.Name))
-	b.WriteString(fmt.Sprintf("**Theme:** %s\n", t.Theme.Name))
-	weight := t.Exercise.Activity.Weight * 100 //nolint:mnd // percentage
+	b.WriteString(fmt.Sprintf("## Task: %s\n\n", t.ExerciseName))
+	b.WriteString(fmt.Sprintf("**Course:** %s\n", t.CourseName))
+	b.WriteString(fmt.Sprintf("**Theme:** %s\n", t.ThemeName))
 	b.WriteString(fmt.Sprintf("**Activity:** %s (%.0f%%)\n\n",
-		t.Exercise.Activity.Name, weight))
+		t.ActivityName, t.ActivityWeight))
 
-	b.WriteString(fmt.Sprintf("**State:** %s\n", stateLabel(t.State)))
-
-	if t.Score != nil {
-		b.WriteString(fmt.Sprintf("**Score:** %.0f/%d\n", *t.Score, t.Exercise.MaxScore))
-	} else {
-		b.WriteString(fmt.Sprintf("**Score:** -/%d\n", t.Exercise.MaxScore))
-	}
-
-	b.WriteString(fmt.Sprintf("**Deadline:** %s (%s)\n", t.Deadline.Format("02 Jan 2006 15:04"), timeLeft(t.Deadline)))
+	b.WriteString(fmt.Sprintf("**State:** %s\n", t.StateLabel))
+	b.WriteString(fmt.Sprintf("**Score:** %s\n", t.ScoreFormatted))
+	b.WriteString(fmt.Sprintf("**Deadline:** %s (%s)\n",
+		t.Deadline.Format(model.DateTimeFormat), t.Deadline.TimeLeft()))
 
 	if t.StartedAt != nil {
-		b.WriteString(fmt.Sprintf("**Started:** %s\n", t.StartedAt.Format("02 Jan 2006 15:04")))
+		b.WriteString(fmt.Sprintf("**Started:** %s\n", t.StartedAt.Format(model.DateTimeFormat)))
 	}
 	if t.SubmitAt != nil {
-		b.WriteString(fmt.Sprintf("**Submitted:** %s\n", t.SubmitAt.Format("02 Jan 2006 15:04")))
+		b.WriteString(fmt.Sprintf("**Submitted:** %s\n", t.SubmitAt.Format(model.DateTimeFormat)))
 	}
 	if t.RejectAt != nil {
-		b.WriteString(fmt.Sprintf("**Rejected:** %s\n", t.RejectAt.Format("02 Jan 2006 15:04")))
+		b.WriteString(fmt.Sprintf("**Rejected:** %s\n", t.RejectAt.Format(model.DateTimeFormat)))
 	}
 	if t.EvaluateAt != nil {
-		b.WriteString(fmt.Sprintf("**Evaluated:** %s\n", t.EvaluateAt.Format("02 Jan 2006 15:04")))
+		b.WriteString(fmt.Sprintf("**Evaluated:** %s\n", t.EvaluateAt.Format(model.DateTimeFormat)))
 	}
 
 	if t.Reviewer != nil {
-		b.WriteString(fmt.Sprintf("\n**Reviewer:** %s %s (%s)\n",
-			t.Reviewer.FirstName, t.Reviewer.LastName, t.Reviewer.Email))
+		b.WriteString(fmt.Sprintf("\n**Reviewer:** %s (%s)\n",
+			t.Reviewer.FullName(), t.Reviewer.Email))
 	}
-	if t.Solution != nil && t.Solution.SolutionURL != "" {
-		b.WriteString(fmt.Sprintf("**Solution:** %s\n", t.Solution.SolutionURL))
+	if t.SolutionURL != "" {
+		b.WriteString(fmt.Sprintf("**Solution:** %s\n", t.SolutionURL))
 	}
 
-	b.WriteString(fmt.Sprintf("\n**Late days balance:** %d\n", t.Student.LateDaysBalance))
+	b.WriteString(fmt.Sprintf("\n**Late days balance:** %d\n", t.LateDaysBalance))
 
 	return b.String()
 }
@@ -261,7 +248,7 @@ func MaterialsList(overview *cu.CourseOverview, materials map[int]*cu.MaterialsR
 				case mat.Discriminator == "file" && mat.Content != nil:
 					b.WriteString(fmt.Sprintf("- 📄 **%s** (%.1f KB)\n", mat.Content.Name, float64(mat.Length)/1024)) //nolint:mnd // bytes to KB
 				case mat.Type == "markdown" && mat.ViewContent != "":
-					links := ExtractLinks(mat.ViewContent)
+					links := materialsUC.ExtractLinks(mat.ViewContent)
 					for _, link := range links {
 						b.WriteString(fmt.Sprintf("- 🔗 %s\n", link))
 					}
@@ -273,62 +260,4 @@ func MaterialsList(overview *cu.CourseOverview, materials map[int]*cu.MaterialsR
 	}
 
 	return b.String()
-}
-
-var linkPattern = regexp.MustCompile(`href=\\"([^"\\]+)\\"`)
-
-// ExtractLinks extracts unique external links from markdown view content.
-func ExtractLinks(viewContent string) []string {
-	matches := linkPattern.FindAllStringSubmatch(viewContent, -1)
-	var links []string
-	seen := make(map[string]bool)
-
-	for _, m := range matches {
-		link := m[1]
-		if strings.HasPrefix(link, "#") || strings.Contains(link, "my.centraluniversity.ru") {
-			continue
-		}
-		if !seen[link] {
-			seen[link] = true
-			links = append(links, link)
-		}
-	}
-
-	return links
-}
-
-func stateLabel(state string) string {
-	switch state {
-	case "backlog":
-		return "TODO"
-	case "inProgress":
-		return "IN PROGRESS"
-	case "submitted":
-		return "SUBMITTED"
-	case "evaluated":
-		return "DONE"
-	case "failed":
-		return "FAILED"
-	default:
-		return strings.ToUpper(state)
-	}
-}
-
-func timeLeft(t time.Time) string {
-	d := time.Until(t)
-	if d < 0 {
-		return "OVERDUE"
-	}
-
-	days := int(d.Hours() / hoursPerDay)
-	hours := int(math.Mod(d.Hours(), hoursPerDay))
-
-	if days > 0 {
-		return fmt.Sprintf("%dd %dh", days, hours)
-	}
-	if hours > 0 {
-		return fmt.Sprintf("%dh %dm", hours, int(math.Mod(d.Minutes(), minutesPerHour)))
-	}
-
-	return fmt.Sprintf("%dm", int(d.Minutes()))
 }
