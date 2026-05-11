@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	cuGw "cu-sync/internal/gateway/cu"
-	mcpsrv "cu-sync/internal/mcp"
+	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
+	mcpsrv "github.com/EgorTarasov/cu/internal/mcp"
 
 	"github.com/spf13/cobra"
 )

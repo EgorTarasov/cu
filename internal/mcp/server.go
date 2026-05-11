@@ -2,22 +2,23 @@ package mcp
 
 import (
 	"context"
-	"cu-sync/internal/mcp/tool/coursestructure"
-	"cu-sync/internal/mcp/tool/coursesummary"
-	"cu-sync/internal/mcp/tool/downloadmaterials"
-	"cu-sync/internal/mcp/tool/longreadsummary"
-	"cu-sync/internal/mcp/tool/readmaterial"
-	searchCourses "cu-sync/internal/mcp/tool/searchcourses"
-	"cu-sync/internal/mcp/tool/studentprofile"
-	"cu-sync/internal/mcp/tool/themesummary"
-	"cu-sync/internal/version"
 
-	"cu-sync/internal/gateway/cu"
-	"cu-sync/internal/mcp/tool/deadlines"
-	"cu-sync/internal/mcp/tool/grades"
-	"cu-sync/internal/mcp/tool/listcourses"
-	"cu-sync/internal/mcp/tool/materials"
-	"cu-sync/internal/mcp/tool/task"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/coursestructure"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/coursesummary"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/downloadmaterials"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/longreadsummary"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/readmaterial"
+	searchCourses "github.com/EgorTarasov/cu/internal/mcp/tool/searchcourses"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/studentprofile"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/themesummary"
+	"github.com/EgorTarasov/cu/internal/version"
+
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/deadlines"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/grades"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/listcourses"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/materials"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/task"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

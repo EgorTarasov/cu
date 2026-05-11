@@ -5,9 +5,9 @@ import (
 	"os"
 	"strconv"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/render"
-	"cu-sync/internal/usecase/task"
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/render"
+	"github.com/EgorTarasov/cu/internal/usecase/task"
 
 	"github.com/spf13/cobra"
 )

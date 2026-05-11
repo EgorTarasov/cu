@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"cu-sync/internal/model"
+	"github.com/EgorTarasov/cu/internal/model"
 )
 
 const deadlinesLimit = 100

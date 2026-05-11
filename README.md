@@ -30,6 +30,16 @@ curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | CU
 сверьте sha256 по `checksums.txt`, распакуйте `cu` куда-то в PATH (`~/.local/bin` или `/usr/local/bin`),
 сделайте исполняемым.
 
+### Через `go install`
+
+Если в системе уже есть Go ≥ 1.26:
+
+```bash
+go install github.com/EgorTarasov/cu/cmd/cu@latest
+```
+
+Бинарь окажется в `$(go env GOPATH)/bin/cu`.
+
 ### Из исходного кода
 
 ```bash
@@ -190,7 +200,7 @@ go test -v ./internal/cu
 ```
 .
 ├── .github/workflows/ # GitHub Actions для CI/CD
-├── cmd/cli/           # Основное приложение CLI
+├── cmd/cu/           # Основное приложение CLI
 ├── internal/
 │   ├── cli/          # Команды CLI (Cobra)
 │   └── cu/           # Клиент API Central University
@@ -225,12 +235,12 @@ make run ARGS='fetch courses'
 
 ```bash
 # Сборка для текущей платформы
-go build -o cu ./cmd/cli
+go build -o cu ./cmd/cu
 
 # Кросс-компиляция
-GOOS=windows GOARCH=amd64 go build -o cu.exe ./cmd/cli
-GOOS=linux GOARCH=amd64 go build -o cu-linux ./cmd/cli
-GOOS=darwin GOARCH=amd64 go build -o cu-macos ./cmd/cli
+GOOS=windows GOARCH=amd64 go build -o cu.exe ./cmd/cu
+GOOS=linux GOARCH=amd64 go build -o cu-linux ./cmd/cu
+GOOS=darwin GOARCH=amd64 go build -o cu-macos ./cmd/cu
 ```
 
 ### CI/CD

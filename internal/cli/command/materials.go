@@ -1,12 +1,13 @@
 package command
 
 import (
-	"cu-sync/internal/gateway/cu"
 	"fmt"
 	"os"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/usecase/materials"
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
+
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/usecase/materials"
 
 	"github.com/spf13/cobra"
 )

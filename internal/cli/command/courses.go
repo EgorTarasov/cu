@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"cu-sync/internal/usecase/courses"
+	"github.com/EgorTarasov/cu/internal/usecase/courses"
 
 	"github.com/spf13/cobra"
 )

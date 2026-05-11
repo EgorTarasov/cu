@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"cu-sync/internal/cli/command"
-	"cu-sync/internal/version"
+	"github.com/EgorTarasov/cu/internal/cli/command"
+	"github.com/EgorTarasov/cu/internal/version"
 )
 
 var (

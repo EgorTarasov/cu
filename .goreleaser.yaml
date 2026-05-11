@@ -8,7 +8,7 @@ before:
 
 builds:
   - id: cu
-    main: ./cmd/cli
+    main: ./cmd/cu
     binary: cu
     env:
       - CGO_ENABLED=0

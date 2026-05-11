@@ -2,8 +2,9 @@ package grades
 
 import (
 	"context"
-	"cu-sync/internal/model"
 	"fmt"
+
+	"github.com/EgorTarasov/cu/internal/model"
 )
 
 const (

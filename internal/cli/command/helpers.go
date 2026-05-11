@@ -1,9 +1,10 @@
 package command
 
 import (
-	"cu-sync/internal/gateway/cu"
 	"fmt"
 	"os"
+
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
 )
 
 // mustClient creates an authenticated client or exits.

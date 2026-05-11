@@ -3,7 +3,7 @@ package command
 import (
 	"fmt"
 
-	"cu-sync/internal/version"
+	"github.com/EgorTarasov/cu/internal/version"
 
 	"github.com/spf13/cobra"
 )
