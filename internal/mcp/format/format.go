@@ -6,6 +6,7 @@ import (
 
 	"cu-sync/internal/gateway/cu"
 	"cu-sync/internal/model"
+	"cu-sync/internal/render"
 	materialsUC "cu-sync/internal/usecase/materials"
 )
 
@@ -204,18 +205,10 @@ func Task(t *model.TaskOutput) string {
 	fmt.Fprintf(&b, "**Deadline:** %s (%s)\n",
 		t.Deadline.Format(model.DateTimeFormat), t.Deadline.TimeLeft())
 
-	if t.StartedAt != nil {
-		fmt.Fprintf(&b, "**Started:** %s\n", t.StartedAt.Format(model.DateTimeFormat))
-	}
-	if t.SubmitAt != nil {
-		fmt.Fprintf(&b, "**Submitted:** %s\n", t.SubmitAt.Format(model.DateTimeFormat))
-	}
-	if t.RejectAt != nil {
-		fmt.Fprintf(&b, "**Rejected:** %s\n", t.RejectAt.Format(model.DateTimeFormat))
-	}
-	if t.EvaluateAt != nil {
-		fmt.Fprintf(&b, "**Evaluated:** %s\n", t.EvaluateAt.Format(model.DateTimeFormat))
-	}
+	render.MDTimeLine(&b, "Started", t.StartedAt)
+	render.MDTimeLine(&b, "Submitted", t.SubmitAt)
+	render.MDTimeLine(&b, "Rejected", t.RejectAt)
+	render.MDTimeLine(&b, "Evaluated", t.EvaluateAt)
 
 	if t.Reviewer != nil {
 		fmt.Fprintf(&b, "\n**Reviewer:** %s (%s)\n",
@@ -311,12 +304,8 @@ func CourseSummary(course *cu.Course) string {
 	}
 	fmt.Fprintf(&b, "**Skill level:** %s (enabled: %t)\n",
 		course.Settings.SkillLevel, course.Settings.IsSkillLevelEnabled)
-	if course.PublishDate != nil {
-		fmt.Fprintf(&b, "**Publish date:** %s\n", course.PublishDate.Format(model.DateTimeFormat))
-	}
-	if course.PublishedAt != nil {
-		fmt.Fprintf(&b, "**Published at:** %s\n", course.PublishedAt.Format(model.DateTimeFormat))
-	}
+	render.MDTimeLine(&b, "Publish date", course.PublishDate)
+	render.MDTimeLine(&b, "Published at", course.PublishedAt)
 
 	return b.String()
 }
@@ -327,12 +316,8 @@ func ThemeSummary(theme *cu.Theme) string {
 	fmt.Fprintf(&b, "## Theme: %s\n\n", theme.Name)
 	fmt.Fprintf(&b, "**ID:** %d | **State:** %s | **Order:** %d\n",
 		theme.ID, theme.State, theme.Order)
-	if theme.PublishDate != nil {
-		fmt.Fprintf(&b, "**Publish date:** %s\n", theme.PublishDate.Format(model.DateTimeFormat))
-	}
-	if theme.PublishedAt != nil {
-		fmt.Fprintf(&b, "**Published at:** %s\n", theme.PublishedAt.Format(model.DateTimeFormat))
-	}
+	render.MDTimeLine(&b, "Publish date", theme.PublishDate)
+	render.MDTimeLine(&b, "Published at", theme.PublishedAt)
 
 	return b.String()
 }
@@ -343,12 +328,8 @@ func LongreadSummary(longread *cu.Longread) string {
 	fmt.Fprintf(&b, "## Longread: %s\n\n", longread.Name)
 	fmt.Fprintf(&b, "**ID:** %d | **Type:** %s | **State:** %s | **Order:** %d\n",
 		longread.ID, longread.Type, longread.State, longread.Order)
-	if longread.PublishDate != nil {
-		fmt.Fprintf(&b, "**Publish date:** %s\n", longread.PublishDate.Format(model.DateTimeFormat))
-	}
-	if longread.PublishedAt != nil {
-		fmt.Fprintf(&b, "**Published at:** %s\n", longread.PublishedAt.Format(model.DateTimeFormat))
-	}
+	render.MDTimeLine(&b, "Publish date", longread.PublishDate)
+	render.MDTimeLine(&b, "Published at", longread.PublishedAt)
 
 	return b.String()
 }

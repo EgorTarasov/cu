@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"cu-sync/internal/model"
+	"cu-sync/internal/render"
 	"cu-sync/internal/usecase/task"
 
 	"github.com/spf13/cobra"
@@ -51,18 +52,10 @@ Examples:
 			out.Deadline.Format(model.DateTimeFormat),
 			out.Deadline.TimeLeft(),
 		)
-		if out.StartedAt != nil {
-			fmt.Printf("Started:  %s\n", out.StartedAt.Format(model.DateTimeFormat))
-		}
-		if out.SubmitAt != nil {
-			fmt.Printf("Submitted: %s\n", out.SubmitAt.Format(model.DateTimeFormat))
-		}
-		if out.RejectAt != nil {
-			fmt.Printf("Rejected: %s\n", out.RejectAt.Format(model.DateTimeFormat))
-		}
-		if out.EvaluateAt != nil {
-			fmt.Printf("Evaluated: %s\n", out.EvaluateAt.Format(model.DateTimeFormat))
-		}
+		render.TimeLine(os.Stdout, "Started", out.StartedAt)
+		render.TimeLine(os.Stdout, "Submitted", out.SubmitAt)
+		render.TimeLine(os.Stdout, "Rejected", out.RejectAt)
+		render.TimeLine(os.Stdout, "Evaluated", out.EvaluateAt)
 		fmt.Println()
 
 		if out.Reviewer != nil {
