@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	cuGw "cu-sync/internal/gateway/cu"
-	"cu-sync/internal/model"
-	ucMaterials "cu-sync/internal/usecase/materials"
+	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
+	"github.com/EgorTarasov/cu/internal/model"
+	ucMaterials "github.com/EgorTarasov/cu/internal/usecase/materials"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

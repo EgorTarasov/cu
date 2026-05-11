@@ -2,7 +2,8 @@ package materials
 
 import (
 	"context"
-	"cu-sync/internal/gateway/cu"
+
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
 )
 
 type LMSClient interface {

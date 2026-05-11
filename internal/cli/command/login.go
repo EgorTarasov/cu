@@ -2,12 +2,13 @@ package command
 
 import (
 	"context"
-	cu2 "cu-sync/internal/gateway/cu"
 	"fmt"
 	"time"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/usecase/login"
+	cu2 "github.com/EgorTarasov/cu/internal/gateway/cu"
+
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/usecase/login"
 
 	"github.com/spf13/cobra"
 )

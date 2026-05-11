@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	cuGw "cu-sync/internal/gateway/cu"
-	mcpfmt "cu-sync/internal/mcp/format"
+	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
+	mcpfmt "github.com/EgorTarasov/cu/internal/mcp/format"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

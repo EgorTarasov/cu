@@ -1,4 +1,4 @@
-module cu-sync
+module github.com/EgorTarasov/cu
 
 go 1.26
 

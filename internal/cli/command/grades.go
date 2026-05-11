@@ -1,12 +1,13 @@
 package command
 
 import (
-	"cu-sync/internal/cli/format"
 	"fmt"
 	"os"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/usecase/grades"
+	"github.com/EgorTarasov/cu/internal/cli/format"
+
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/usecase/grades"
 
 	"github.com/spf13/cobra"
 )

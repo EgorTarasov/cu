@@ -5,7 +5,7 @@
 BINARY_NAME=cu
 BIN_DIR=bin
 BUILD_DIR=build
-CMD_DIR=cmd/cli
+CMD_DIR=cmd/cu
 INSTALL_DIR?=$(shell go env GOPATH)/bin
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")

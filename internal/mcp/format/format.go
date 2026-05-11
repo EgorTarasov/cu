@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"cu-sync/internal/gateway/cu"
-	"cu-sync/internal/model"
-	"cu-sync/internal/render"
-	materialsUC "cu-sync/internal/usecase/materials"
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/render"
+	materialsUC "github.com/EgorTarasov/cu/internal/usecase/materials"
 )
 
 func CoursesList(courses []cu.StudentCourse) string {

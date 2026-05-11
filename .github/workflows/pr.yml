@@ -47,13 +47,13 @@ jobs:
 
       - name: Build for multiple platforms
         run: |
-          GOOS=linux GOARCH=amd64 go build -o /tmp/cu-linux ./cmd/cli
-          GOOS=darwin GOARCH=amd64 go build -o /tmp/cu-darwin ./cmd/cli
-          GOOS=windows GOARCH=amd64 go build -o /tmp/cu-windows.exe ./cmd/cli
+          GOOS=linux GOARCH=amd64 go build -o /tmp/cu-linux ./cmd/cu
+          GOOS=darwin GOARCH=amd64 go build -o /tmp/cu-darwin ./cmd/cu
+          GOOS=windows GOARCH=amd64 go build -o /tmp/cu-windows.exe ./cmd/cu
 
       - name: Test CLI functionality
         run: |
-          go build -o cu ./cmd/cli
+          go build -o cu ./cmd/cu
           ./cu --help
           ./cu fetch --help
 

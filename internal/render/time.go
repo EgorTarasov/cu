@@ -9,7 +9,7 @@ import (
 	"io"
 	"time"
 
-	"cu-sync/internal/model"
+	"github.com/EgorTarasov/cu/internal/model"
 )
 
 // TimeLine writes "<label>: <time>\n" to w if t != nil. No-op for nil.

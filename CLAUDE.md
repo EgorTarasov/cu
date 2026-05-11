@@ -6,8 +6,8 @@
 
 ## О проекте
 
-`cu-cli` (модуль `cu-sync`) — CLI и MCP-сервер для LMS Центрального
-Университета. `cu` умеет:
+`cu` (модуль `github.com/EgorTarasov/cu`) — CLI и MCP-сервер для LMS
+Центрального Университета. `cu` умеет:
 - авторизоваться через браузер и хранить cookie,
 - ходить в публичный HTTP API LMS (`https://my.centraluniversity.ru/api/...`),
 - отдавать те же данные хостам через MCP (Claude Code, IDE).
@@ -20,7 +20,7 @@ v2.7.2 (конфиг в `.golangci.yml`). Сборка/линт/тесты — �
 Слои (от внешнего к внутреннему):
 
 ```
-cmd/cli/main.go               — точка входа, ставит version, вызывает RootCmd
+cmd/cu/main.go               — точка входа, ставит version, вызывает RootCmd
 internal/cli/command/         — cobra-команды CLI
 internal/mcp/                 — MCP-сервер и тулы
   ├── server.go               — регистрирует все тулы, держит интерфейс LMSClient

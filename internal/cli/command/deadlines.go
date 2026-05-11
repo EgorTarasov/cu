@@ -3,8 +3,8 @@ package command
 import (
 	"fmt"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/usecase/deadlines"
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/usecase/deadlines"
 
 	"github.com/spf13/cobra"
 )

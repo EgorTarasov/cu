@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"cu-sync/internal/model"
+	"github.com/EgorTarasov/cu/internal/model"
 )
 
 const maxCoursesLimit = 10000

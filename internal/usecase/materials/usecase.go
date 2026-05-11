@@ -2,12 +2,13 @@ package materials
 
 import (
 	"context"
-	cu2 "cu-sync/internal/gateway/cu"
 	"fmt"
 	"path/filepath"
 	"sync/atomic"
 
-	"cu-sync/internal/model"
+	cu2 "github.com/EgorTarasov/cu/internal/gateway/cu"
+
+	"github.com/EgorTarasov/cu/internal/model"
 
 	"golang.org/x/sync/errgroup"
 )

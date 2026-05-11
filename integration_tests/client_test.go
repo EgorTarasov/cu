@@ -3,10 +3,11 @@
 package integration_tests
 
 import (
-	"cu-sync/internal/gateway/cu"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/EgorTarasov/cu/internal/gateway/cu"
 )
 
 func main() {

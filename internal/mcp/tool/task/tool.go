@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	mcpfmt "cu-sync/internal/mcp/format"
-	"cu-sync/internal/model"
-	taskUC "cu-sync/internal/usecase/task"
+	mcpfmt "github.com/EgorTarasov/cu/internal/mcp/format"
+	"github.com/EgorTarasov/cu/internal/model"
+	taskUC "github.com/EgorTarasov/cu/internal/usecase/task"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"cu-sync/internal/model"
-	"cu-sync/internal/render"
-	"cu-sync/internal/usecase/materials"
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/render"
+	"github.com/EgorTarasov/cu/internal/usecase/materials"
 
 	"github.com/spf13/cobra"
 )

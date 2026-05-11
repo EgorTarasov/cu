@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	cuGw "cu-sync/internal/gateway/cu"
-	mcpfmt "cu-sync/internal/mcp/format"
-	"cu-sync/internal/model"
-	ucDeadlines "cu-sync/internal/usecase/deadlines"
+	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
+	mcpfmt "github.com/EgorTarasov/cu/internal/mcp/format"
+	"github.com/EgorTarasov/cu/internal/model"
+	ucDeadlines "github.com/EgorTarasov/cu/internal/usecase/deadlines"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
