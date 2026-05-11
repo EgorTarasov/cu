@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"cu-sync/internal/model"
+	"cu-sync/internal/render"
 	"cu-sync/internal/usecase/materials"
 
 	"github.com/spf13/cobra"
@@ -166,12 +167,8 @@ var fetchCourseSummaryCmd = &cobra.Command{
 		}
 		fmt.Printf("Skill level: %s (enabled: %t)\n",
 			course.Settings.SkillLevel, course.Settings.IsSkillLevelEnabled)
-		if course.PublishDate != nil {
-			fmt.Printf("Publish date: %s\n", course.PublishDate.Format(model.DateTimeFormat))
-		}
-		if course.PublishedAt != nil {
-			fmt.Printf("Published at: %s\n", course.PublishedAt.Format(model.DateTimeFormat))
-		}
+		render.TimeLine(os.Stdout, "Publish date", course.PublishDate)
+		render.TimeLine(os.Stdout, "Published at", course.PublishedAt)
 	},
 }
 
@@ -233,12 +230,8 @@ var fetchThemeCmd = &cobra.Command{
 
 		fmt.Printf("Theme: %s (ID: %d)\n", theme.Name, theme.ID)
 		fmt.Printf("State: %s | Order: %d\n", theme.State, theme.Order)
-		if theme.PublishDate != nil {
-			fmt.Printf("Publish date: %s\n", theme.PublishDate.Format(model.DateTimeFormat))
-		}
-		if theme.PublishedAt != nil {
-			fmt.Printf("Published at: %s\n", theme.PublishedAt.Format(model.DateTimeFormat))
-		}
+		render.TimeLine(os.Stdout, "Publish date", theme.PublishDate)
+		render.TimeLine(os.Stdout, "Published at", theme.PublishedAt)
 	},
 }
 
@@ -263,11 +256,7 @@ var fetchLongreadCmd = &cobra.Command{
 
 		fmt.Printf("Longread: %s (ID: %d)\n", longread.Name, longread.ID)
 		fmt.Printf("Type: %s | State: %s | Order: %d\n", longread.Type, longread.State, longread.Order)
-		if longread.PublishDate != nil {
-			fmt.Printf("Publish date: %s\n", longread.PublishDate.Format(model.DateTimeFormat))
-		}
-		if longread.PublishedAt != nil {
-			fmt.Printf("Published at: %s\n", longread.PublishedAt.Format(model.DateTimeFormat))
-		}
+		render.TimeLine(os.Stdout, "Publish date", longread.PublishDate)
+		render.TimeLine(os.Stdout, "Published at", longread.PublishedAt)
 	},
 }
