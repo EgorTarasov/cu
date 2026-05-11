@@ -560,13 +560,55 @@ components:
           type: string
           nullable: true
 
+    Progress:
+      type: object
+      properties:
+        completedCount:
+          type: integer
+        totalCount:
+          type: integer
+        percentage:
+          type: number
+
+    StudentCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        state:
+          type: string
+          enum: [published, draft]
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        settings:
+          $ref: "#/components/schemas/CourseSettings"
+        subjectId:
+          type: integer
+          nullable: true
+        isArchived:
+          type: boolean
+        category:
+          type: string
+          enum: [development, softSkills, general, withoutCategory]
+        progress:
+          $ref: "#/components/schemas/Progress"
+          nullable: true
+
     CoursesListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/Course"
+            $ref: "#/components/schemas/StudentCourse"
         paging:
           $ref: "#/components/schemas/Paging"
 
@@ -581,6 +623,14 @@ components:
           type: boolean
         state:
           type: string
+        publishDate:
+          type: string
+          format: date-time
+          nullable: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
         settings:
           $ref: "#/components/schemas/CourseSettings"
         themes:
@@ -621,6 +671,8 @@ components:
           enum: [common]
         name:
           type: string
+        order:
+          type: integer
         state:
           type: string
         publishDate:

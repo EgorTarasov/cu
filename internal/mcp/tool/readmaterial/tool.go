@@ -33,9 +33,7 @@ var Definition = &mcp.Tool{
 }
 
 func NewHandler(lms LMSClient, gitlab GitLabClient) func(context.Context, *mcp.CallToolRequest, Input) (*mcp.CallToolResult, any, error) {
-	return func(_ context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
-		ctx := context.Background()
-
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
 		if gitlab == nil {
 			return textResult("Error: GitLab not configured. Run `cu login --gitlab` first."), nil, nil
 		}

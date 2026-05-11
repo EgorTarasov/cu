@@ -37,10 +37,18 @@ func (s *ClientTestSuite) SetupTest() {
 		s.Equal("same-origin", r.Header.Get("Sec-Fetch-Site"))
 
 		switch r.URL.Path {
+		case "/api/micro-lms/students/me":
+			s.handleCurrentStudent(w, r)
+		case "/api/micro-lms/courses/519":
+			s.handleCourseSummary(w, r)
 		case "/api/micro-lms/courses/519/overview":
 			s.handleCourseOverview(w, r)
 		case "/api/micro-lms/courses/student":
 			s.handleStudentCourses(w, r)
+		case "/api/micro-lms/themes/4399":
+			s.handleThemeSummary(w, r)
+		case "/api/micro-lms/longreads/7739":
+			s.handleLongreadSummary(w, r)
 		case "/api/account/me":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`{"id":"test-user","email":"test@example.com"}`))
@@ -60,6 +68,43 @@ func (s *ClientTestSuite) TearDownTest() {
 	if s.testServer != nil {
 		s.testServer.Close()
 	}
+}
+
+func (s *ClientTestSuite) handleCurrentStudent(w http.ResponseWriter, _ *http.Request) {
+	student := Student{
+		ID:              "f7c52f1f-3f83-4f2e-8d7b-4b7b7b2a2e1b",
+		LastName:        "Ivanov",
+		FirstName:       "Ivan",
+		MiddleName:      "Ivanovich",
+		UniversityEmail: "ivanov@centraluniversity.ru",
+		TimeAccount:     "1 semester",
+		StudyStartYear:  2024,
+		StudyLevel:      "bachelor",
+		LateDaysBalance: 3,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(student)
+}
+
+func (s *ClientTestSuite) handleCourseSummary(w http.ResponseWriter, _ *http.Request) {
+	course := Course{
+		ID:            519,
+		Name:          "Case Evenings (Кейс-вечера)",
+		State:         "published",
+		Category:      "development",
+		CategoryCover: "cover.png",
+		IsArchived:    false,
+		PublishDate:   &time.Time{},
+		PublishedAt:   &time.Time{},
+		Settings: CourseSettings{
+			SkillLevel:          "none",
+			IsSkillLevelEnabled: false,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(course)
 }
 
 func (s *ClientTestSuite) handleCourseOverview(w http.ResponseWriter, _ *http.Request) {
@@ -95,6 +140,35 @@ func (s *ClientTestSuite) handleCourseOverview(w http.ResponseWriter, _ *http.Re
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(courseOverview)
+}
+
+func (s *ClientTestSuite) handleThemeSummary(w http.ResponseWriter, _ *http.Request) {
+	theme := Theme{
+		ID:          4399,
+		Name:        "Силлабус",
+		Order:       1,
+		State:       "published",
+		PublishDate: &time.Time{},
+		PublishedAt: &time.Time{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(theme)
+}
+
+func (s *ClientTestSuite) handleLongreadSummary(w http.ResponseWriter, _ *http.Request) {
+	longread := Longread{
+		ID:          7739,
+		Type:        "common",
+		Name:        "Ссылка на силлабус",
+		State:       "published",
+		Order:       2,
+		PublishDate: &time.Time{},
+		PublishedAt: &time.Time{},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(longread)
 }
 
 func (s *ClientTestSuite) handleStudentCourses(w http.ResponseWriter, r *http.Request) {
@@ -239,6 +313,48 @@ func (s *ClientTestSuite) TestGetStudentCourses_Success() {
 	s.Equal("published", courses.Items[0].State)
 	s.False(courses.Items[0].IsArchived)
 	s.Equal(2, courses.Paging.TotalCount)
+}
+
+func (s *ClientTestSuite) TestGetCurrentStudent_Success() {
+	ctx := s.T().Context()
+	student, err := s.client.GetCurrentStudent(ctx)
+	s.Require().NoError(err)
+	s.NotNil(student)
+	s.Equal("Ivanov", student.LastName)
+	s.Equal("Ivan", student.FirstName)
+	s.Equal("ivanov@centraluniversity.ru", student.UniversityEmail)
+	s.Equal(3, student.LateDaysBalance)
+}
+
+func (s *ClientTestSuite) TestGetCourse_Success() {
+	ctx := s.T().Context()
+	course, err := s.client.GetCourse(ctx, 519)
+	s.Require().NoError(err)
+	s.NotNil(course)
+	s.Equal(519, course.ID)
+	s.Equal("Case Evenings (Кейс-вечера)", course.Name)
+	s.Equal("development", course.Category)
+	s.Equal("cover.png", course.CategoryCover)
+}
+
+func (s *ClientTestSuite) TestGetTheme_Success() {
+	ctx := s.T().Context()
+	theme, err := s.client.GetTheme(ctx, 4399)
+	s.Require().NoError(err)
+	s.NotNil(theme)
+	s.Equal(4399, theme.ID)
+	s.Equal("Силлабус", theme.Name)
+	s.Equal(1, theme.Order)
+}
+
+func (s *ClientTestSuite) TestGetLongread_Success() {
+	ctx := s.T().Context()
+	longread, err := s.client.GetLongread(ctx, 7739)
+	s.Require().NoError(err)
+	s.NotNil(longread)
+	s.Equal(7739, longread.ID)
+	s.Equal("Ссылка на силлабус", longread.Name)
+	s.Equal(2, longread.Order)
 }
 
 func (s *ClientTestSuite) TestGetStudentCourses_WithLimit() {

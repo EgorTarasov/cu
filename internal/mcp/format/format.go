@@ -261,3 +261,92 @@ func MaterialsList(overview *cu.CourseOverview, materials map[int]*cu.MaterialsR
 
 	return b.String()
 }
+
+func StudentProfile(student *cu.Student) string {
+	var b strings.Builder
+
+	fullName := strings.TrimSpace(strings.Join([]string{
+		student.LastName,
+		student.FirstName,
+		student.MiddleName,
+	}, " "))
+	if fullName == "" {
+		fullName = "Unknown"
+	}
+
+	fmt.Fprintf(&b, "## Student: %s\n\n", fullName)
+	fmt.Fprintf(&b, "**ID:** %s\n", student.ID)
+	if student.UniversityEmail != "" {
+		fmt.Fprintf(&b, "**Email:** %s\n", student.UniversityEmail)
+	}
+	if student.StudyLevel != "" {
+		fmt.Fprintf(&b, "**Study level:** %s\n", student.StudyLevel)
+	}
+	if student.StudyStartYear > 0 {
+		fmt.Fprintf(&b, "**Study start year:** %d\n", student.StudyStartYear)
+	}
+	if student.TimeAccount != "" {
+		fmt.Fprintf(&b, "**Time account:** %s\n", student.TimeAccount)
+	}
+	fmt.Fprintf(&b, "**Late days balance:** %d\n", student.LateDaysBalance)
+
+	return b.String()
+}
+
+func CourseSummary(course *cu.Course) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "## Course: %s\n\n", course.Name)
+	fmt.Fprintf(&b, "**ID:** %d | **State:** %s | **Archived:** %t\n",
+		course.ID, course.State, course.IsArchived)
+
+	if course.Category != "" {
+		fmt.Fprintf(&b, "**Category:** %s\n", course.Category)
+	}
+	if course.CategoryCover != "" {
+		fmt.Fprintf(&b, "**Category cover:** %s\n", course.CategoryCover)
+	}
+	if course.SubjectID != nil {
+		fmt.Fprintf(&b, "**Subject ID:** %d\n", *course.SubjectID)
+	}
+	if course.PublishDate != nil {
+		fmt.Fprintf(&b, "**Publish date:** %s\n", course.PublishDate.Format(model.DateTimeFormat))
+	}
+	if course.PublishedAt != nil {
+		fmt.Fprintf(&b, "**Published at:** %s\n", course.PublishedAt.Format(model.DateTimeFormat))
+	}
+
+	return b.String()
+}
+
+func ThemeSummary(theme *cu.Theme) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "## Theme: %s\n\n", theme.Name)
+	fmt.Fprintf(&b, "**ID:** %d | **State:** %s | **Order:** %d\n",
+		theme.ID, theme.State, theme.Order)
+	if theme.PublishDate != nil {
+		fmt.Fprintf(&b, "**Publish date:** %s\n", theme.PublishDate.Format(model.DateTimeFormat))
+	}
+	if theme.PublishedAt != nil {
+		fmt.Fprintf(&b, "**Published at:** %s\n", theme.PublishedAt.Format(model.DateTimeFormat))
+	}
+
+	return b.String()
+}
+
+func LongreadSummary(longread *cu.Longread) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "## Longread: %s\n\n", longread.Name)
+	fmt.Fprintf(&b, "**ID:** %d | **Type:** %s | **State:** %s | **Order:** %d\n",
+		longread.ID, longread.Type, longread.State, longread.Order)
+	if longread.PublishDate != nil {
+		fmt.Fprintf(&b, "**Publish date:** %s\n", longread.PublishDate.Format(model.DateTimeFormat))
+	}
+	if longread.PublishedAt != nil {
+		fmt.Fprintf(&b, "**Published at:** %s\n", longread.PublishedAt.Format(model.DateTimeFormat))
+	}
+
+	return b.String()
+}

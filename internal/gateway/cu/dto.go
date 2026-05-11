@@ -14,6 +14,20 @@ type CourseOverview struct {
 	IsArchived  bool           `json:"isArchived"`
 }
 
+// Course represents course summary information.
+type Course struct {
+	PublishDate   *time.Time     `json:"publishDate"`
+	PublishedAt   *time.Time     `json:"publishedAt"`
+	SubjectID     *int           `json:"subjectId"`
+	Settings      CourseSettings `json:"settings"`
+	Name          string         `json:"name"`
+	State         string         `json:"state"`
+	Category      string         `json:"category"`
+	CategoryCover string         `json:"categoryCover"`
+	ID            int            `json:"id"`
+	IsArchived    bool           `json:"isArchived"`
+}
+
 // CourseSettings represents course configuration settings.
 type CourseSettings struct {
 	SkillLevel          string `json:"skillLevel"`
@@ -39,6 +53,7 @@ type Longread struct {
 	Type        string     `json:"type"`
 	Name        string     `json:"name"`
 	State       string     `json:"state"`
+	Order       int        `json:"order"`
 	ID          int        `json:"id"`
 }
 
@@ -83,6 +98,19 @@ type Paging struct {
 type StudentCoursesResponse struct {
 	Items  []StudentCourse `json:"items"`
 	Paging Paging          `json:"paging"`
+}
+
+// Student represents the current student profile.
+type Student struct {
+	ID              string `json:"id"`
+	LastName        string `json:"lastName"`
+	FirstName       string `json:"firstName"`
+	MiddleName      string `json:"middleName"`
+	UniversityEmail string `json:"universityEmail"`
+	TimeAccount     string `json:"timeAccount"`
+	StudyStartYear  int    `json:"studyStartYear"`
+	StudyLevel      string `json:"studyLevel"`
+	LateDaysBalance int    `json:"lateDaysBalance"`
 }
 
 // Material represents a material item in a longread.

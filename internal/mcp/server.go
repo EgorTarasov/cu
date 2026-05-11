@@ -3,9 +3,13 @@ package mcp
 import (
 	"context"
 	"cu-sync/internal/mcp/tool/coursestructure"
+	"cu-sync/internal/mcp/tool/coursesummary"
 	"cu-sync/internal/mcp/tool/downloadmaterials"
+	"cu-sync/internal/mcp/tool/longreadsummary"
 	"cu-sync/internal/mcp/tool/readmaterial"
 	searchCourses "cu-sync/internal/mcp/tool/searchcourses"
+	"cu-sync/internal/mcp/tool/studentprofile"
+	"cu-sync/internal/mcp/tool/themesummary"
 	"cu-sync/internal/version"
 
 	"cu-sync/internal/gateway/cu"
@@ -19,15 +23,19 @@ import (
 )
 
 type LMSClient interface {
+	GetCurrentStudent(ctx context.Context) (*cu.Student, error)
 	GetStudentCourses(ctx context.Context, limit int, state string) (*cu.StudentCoursesResponse, error)
 	ResolveCourse(ctx context.Context, query string) (int, string, error)
+	GetCourse(ctx context.Context, courseID int) (*cu.Course, error)
 	GetCourseOverview(ctx context.Context, courseID int) (*cu.CourseOverview, error)
+	GetTheme(ctx context.Context, themeID int) (*cu.Theme, error)
 	GetDeadlines(ctx context.Context, limit int, courseID *int) ([]cu.Deadline, error)
 	GetCourseProgress(ctx context.Context, courseID int) (*cu.CourseProgress, error)
 	GetStudentPerformance(ctx context.Context, courseID int) (*cu.StudentPerformance, error)
 	GetActivitiesPerformance(ctx context.Context, courseID int) (*cu.ActivitiesPerformance, error)
 	GetCourseExercises(ctx context.Context, courseID int) (*cu.CourseExercises, error)
 	GetTask(ctx context.Context, taskID int) (*cu.Task, error)
+	GetLongread(ctx context.Context, longreadID int) (*cu.Longread, error)
 	GetLongReadContent(ctx context.Context, longReadID int) (*cu.MaterialsResponse, error)
 	DownloadFile(ctx context.Context, material cu.Material, destDir string) (string, error)
 }
@@ -61,9 +69,13 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 func (s *Server) registerTools() {
+	mcp.AddTool(s.srv, studentprofile.Definition, studentprofile.NewHandler(s.lms))
 	mcp.AddTool(s.srv, listcourses.Definition, listcourses.NewHandler(s.lms))
 	mcp.AddTool(s.srv, searchCourses.Definition, searchCourses.NewHandler(s.lms))
+	mcp.AddTool(s.srv, coursesummary.Definition, coursesummary.NewHandler(s.lms))
 	mcp.AddTool(s.srv, coursestructure.Definition, coursestructure.NewHandler(s.lms))
+	mcp.AddTool(s.srv, themesummary.Definition, themesummary.NewHandler(s.lms))
+	mcp.AddTool(s.srv, longreadsummary.Definition, longreadsummary.NewHandler(s.lms))
 	mcp.AddTool(s.srv, deadlines.Definition, deadlines.NewHandler(s.lms))
 	mcp.AddTool(s.srv, task.Definition, task.NewHandler(s.lms))
 	mcp.AddTool(s.srv, grades.Definition, grades.NewHandler(s.lms))

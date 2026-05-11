@@ -2,7 +2,6 @@ package cu
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,29 +11,12 @@ import (
 )
 
 func (c *Client) GetLongReadContent(ctx context.Context, longReadID int) (*MaterialsResponse, error) {
-	path := fmt.Sprintf("/api/micro-lms/longreads/%d/materials?limit=10000", longReadID)
+	endpoint := fmt.Sprintf(LongreadMaterialsEndpoint, longReadID) + "?limit=10000"
+	return doJSON[MaterialsResponse](ctx, c, endpoint)
+}
 
-	req, err := c.prepareRequest(ctx, http.MethodGet, path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
-	}
-
-	res, err := c.executeRequest(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	var materials MaterialsResponse
-	if err = json.NewDecoder(res.Body).Decode(&materials); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return &materials, nil
+func (c *Client) GetLongread(ctx context.Context, longreadID int) (*Longread, error) {
+	return doJSON[Longread](ctx, c, fmt.Sprintf(LongreadEndpoint, longreadID))
 }
 
 func (c *Client) GetDownloadLink(ctx context.Context, filename, version string) (string, error) {
@@ -42,29 +24,13 @@ func (c *Client) GetDownloadLink(ctx context.Context, filename, version string) 
 	params.Add("filename", filename)
 	params.Add("version", version)
 
-	path := fmt.Sprintf("/api/micro-lms/content/download-link?%s", params.Encode())
+	endpoint := DownloadLinkEndpoint + "?" + params.Encode()
 
-	req, err := c.prepareRequest(ctx, http.MethodGet, path)
+	link, err := doJSON[DownloadLinkResponse](ctx, c, endpoint)
 	if err != nil {
-		return "", fmt.Errorf("failed to prepare request: %w", err)
+		return "", err
 	}
-
-	res, err := c.executeRequest(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	var downloadLink DownloadLinkResponse
-	if err = json.NewDecoder(res.Body).Decode(&downloadLink); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return downloadLink.URL, nil
+	return link.URL, nil
 }
 
 func (c *Client) DownloadFile(ctx context.Context, material Material, destDir string) (string, error) {

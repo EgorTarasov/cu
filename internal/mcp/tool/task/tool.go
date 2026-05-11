@@ -22,9 +22,7 @@ var Definition = &mcp.Tool{
 
 func NewHandler(lms taskUC.LMSClient) func(context.Context, *mcp.CallToolRequest, Input) (*mcp.CallToolResult, any, error) {
 	uc := taskUC.New(lms)
-	return func(_ context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
-		ctx := context.Background()
-
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
 		out, err := uc.Get(ctx, model.TaskGetInput{TaskID: in.TaskID})
 		if err != nil {
 			return textResult(fmt.Sprintf("Error: %v", err)), nil, nil

@@ -19,7 +19,11 @@ func init() {
 	fetchCourseCmd.Flags().Bool("dump", false, "dumps all course data")
 
 	fetchCmd.AddCommand(fetchCourseCmd)
+	fetchCmd.AddCommand(fetchCourseSummaryCmd)
 	fetchCmd.AddCommand(fetchCoursesCmd)
+	fetchCmd.AddCommand(fetchStudentCmd)
+	fetchCmd.AddCommand(fetchThemeCmd)
+	fetchCmd.AddCommand(fetchLongreadCmd)
 }
 
 var fetchCmd = &cobra.Command{
@@ -129,6 +133,148 @@ var fetchCoursesCmd = &cobra.Command{
 					course.Progress.Percentage)
 			}
 			fmt.Println()
+		}
+	},
+}
+
+var fetchCourseSummaryCmd = &cobra.Command{
+	Use:   "course-summary [course-id]",
+	Short: "Fetch course summary by ID",
+	Long:  `Fetch course summary information from Central University by course ID.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		client := mustClient()
+
+		courseID, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Printf("Invalid course ID '%s': %v\n", args[0], err)
+			return
+		}
+
+		course, err := client.GetCourse(ctx, courseID)
+		if err != nil {
+			fmt.Printf("Failed to fetch course summary: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Course: %s (ID: %d)\n", course.Name, course.ID)
+		fmt.Printf("State: %s | Archived: %v\n", course.State, course.IsArchived)
+		if course.Category != "" {
+			fmt.Printf("Category: %s\n", course.Category)
+		}
+		if course.CategoryCover != "" {
+			fmt.Printf("Category cover: %s\n", course.CategoryCover)
+		}
+		if course.SubjectID != nil {
+			fmt.Printf("Subject ID: %d\n", *course.SubjectID)
+		}
+		if course.PublishDate != nil {
+			fmt.Printf("Publish date: %s\n", course.PublishDate.Format(model.DateTimeFormat))
+		}
+		if course.PublishedAt != nil {
+			fmt.Printf("Published at: %s\n", course.PublishedAt.Format(model.DateTimeFormat))
+		}
+	},
+}
+
+var fetchStudentCmd = &cobra.Command{
+	Use:   "student",
+	Short: "Fetch current student profile",
+	Long:  "Fetch the current student profile from Central University.",
+	Run: func(cmd *cobra.Command, _ []string) {
+		ctx := cmd.Context()
+		client := mustClient()
+
+		student, err := client.GetCurrentStudent(ctx)
+		if err != nil {
+			fmt.Printf("Failed to fetch student profile: %v\n", err)
+			return
+		}
+
+		fullName := student.LastName + " " + student.FirstName
+		if student.MiddleName != "" {
+			fullName += " " + student.MiddleName
+		}
+
+		fmt.Printf("Student: %s\n", fullName)
+		fmt.Printf("ID: %s\n", student.ID)
+		if student.UniversityEmail != "" {
+			fmt.Printf("Email: %s\n", student.UniversityEmail)
+		}
+		if student.StudyLevel != "" {
+			fmt.Printf("Study level: %s\n", student.StudyLevel)
+		}
+		if student.StudyStartYear > 0 {
+			fmt.Printf("Study start year: %d\n", student.StudyStartYear)
+		}
+		if student.TimeAccount != "" {
+			fmt.Printf("Time account: %s\n", student.TimeAccount)
+		}
+		fmt.Printf("Late days balance: %d\n", student.LateDaysBalance)
+	},
+}
+
+var fetchThemeCmd = &cobra.Command{
+	Use:   "theme [theme-id]",
+	Short: "Fetch theme summary by ID",
+	Long:  `Fetch theme summary information from Central University by theme ID.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		client := mustClient()
+
+		themeID, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Printf("Invalid theme ID '%s': %v\n", args[0], err)
+			return
+		}
+
+		theme, err := client.GetTheme(ctx, themeID)
+		if err != nil {
+			fmt.Printf("Failed to fetch theme: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Theme: %s (ID: %d)\n", theme.Name, theme.ID)
+		fmt.Printf("State: %s | Order: %d\n", theme.State, theme.Order)
+		if theme.PublishDate != nil {
+			fmt.Printf("Publish date: %s\n", theme.PublishDate.Format(model.DateTimeFormat))
+		}
+		if theme.PublishedAt != nil {
+			fmt.Printf("Published at: %s\n", theme.PublishedAt.Format(model.DateTimeFormat))
+		}
+	},
+}
+
+var fetchLongreadCmd = &cobra.Command{
+	Use:   "longread [longread-id]",
+	Short: "Fetch longread summary by ID",
+	Long:  `Fetch longread summary information from Central University by longread ID.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		client := mustClient()
+
+		longreadID, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Printf("Invalid longread ID '%s': %v\n", args[0], err)
+			return
+		}
+
+		longread, err := client.GetLongread(ctx, longreadID)
+		if err != nil {
+			fmt.Printf("Failed to fetch longread: %v\n", err)
+			return
+		}
+
+		fmt.Printf("Longread: %s (ID: %d)\n", longread.Name, longread.ID)
+		fmt.Printf("Type: %s | State: %s | Order: %d\n", longread.Type, longread.State, longread.Order)
+		if longread.PublishDate != nil {
+			fmt.Printf("Publish date: %s\n", longread.PublishDate.Format(model.DateTimeFormat))
+		}
+		if longread.PublishedAt != nil {
+			fmt.Printf("Published at: %s\n", longread.PublishedAt.Format(model.DateTimeFormat))
 		}
 	},
 }
