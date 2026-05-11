@@ -309,6 +309,8 @@ func CourseSummary(course *cu.Course) string {
 	if course.SubjectID != nil {
 		fmt.Fprintf(&b, "**Subject ID:** %d\n", *course.SubjectID)
 	}
+	fmt.Fprintf(&b, "**Skill level:** %s (enabled: %t)\n",
+		course.Settings.SkillLevel, course.Settings.IsSkillLevelEnabled)
 	if course.PublishDate != nil {
 		fmt.Fprintf(&b, "**Publish date:** %s\n", course.PublishDate.Format(model.DateTimeFormat))
 	}

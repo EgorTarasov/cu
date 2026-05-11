@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"cu-sync/internal/cli/command"
 	"cu-sync/internal/version"
 )
@@ -13,8 +16,10 @@ var (
 
 func main() {
 	version.Set(ver, commit, date)
+	command.RootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", ver, commit, date)
 
 	if err := command.RootCmd.Execute(); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

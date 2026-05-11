@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"cu-sync/internal/model"
 	"cu-sync/internal/usecase/materials"
@@ -43,15 +44,13 @@ var fetchCourseCmd = &cobra.Command{
 
 		courseID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("Invalid course ID '%s': %v\n", args[0], err)
-			return
+			exitErrf("Invalid course ID %q: %v", args[0], err)
 		}
 
 		fmt.Printf("Fetching course %d...\n", courseID)
 		course, err := client.GetCourseOverview(ctx, courseID)
 		if err != nil {
-			fmt.Printf("Failed to fetch course: %v\n", err)
-			return
+			exitErrf("Failed to fetch course: %v", err)
 		}
 
 		fmt.Printf("Course: %s (ID: %d)\n", course.Name, course.ID)
@@ -83,8 +82,7 @@ var fetchCourseCmd = &cobra.Command{
 				BasePath:    courseDir,
 			}, onEvent)
 			if err != nil {
-				fmt.Printf("Failed to download course data: %v\n", err)
-				return
+				exitErrf("Failed to download course data: %v", err)
 			}
 
 			fmt.Printf("Download complete: %d/%d files to %s\n",
@@ -113,8 +111,7 @@ var fetchCoursesCmd = &cobra.Command{
 
 		courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
 		if err != nil {
-			fmt.Printf("Failed to fetch courses: %v\n", err)
-			return
+			exitErrf("Failed to fetch courses: %v", err)
 		}
 
 		fmt.Printf("Found %d courses\n\n", len(courses.Items))
@@ -148,14 +145,12 @@ var fetchCourseSummaryCmd = &cobra.Command{
 
 		courseID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("Invalid course ID '%s': %v\n", args[0], err)
-			return
+			exitErrf("Invalid course ID %q: %v", args[0], err)
 		}
 
 		course, err := client.GetCourse(ctx, courseID)
 		if err != nil {
-			fmt.Printf("Failed to fetch course summary: %v\n", err)
-			return
+			exitErrf("Failed to fetch course summary: %v", err)
 		}
 
 		fmt.Printf("Course: %s (ID: %d)\n", course.Name, course.ID)
@@ -169,6 +164,8 @@ var fetchCourseSummaryCmd = &cobra.Command{
 		if course.SubjectID != nil {
 			fmt.Printf("Subject ID: %d\n", *course.SubjectID)
 		}
+		fmt.Printf("Skill level: %s (enabled: %t)\n",
+			course.Settings.SkillLevel, course.Settings.IsSkillLevelEnabled)
 		if course.PublishDate != nil {
 			fmt.Printf("Publish date: %s\n", course.PublishDate.Format(model.DateTimeFormat))
 		}
@@ -188,13 +185,13 @@ var fetchStudentCmd = &cobra.Command{
 
 		student, err := client.GetCurrentStudent(ctx)
 		if err != nil {
-			fmt.Printf("Failed to fetch student profile: %v\n", err)
-			return
+			exitErrf("Failed to fetch student profile: %v", err)
 		}
 
-		fullName := student.LastName + " " + student.FirstName
-		if student.MiddleName != "" {
-			fullName += " " + student.MiddleName
+		fullName := strings.TrimSpace(strings.Join(
+			[]string{student.LastName, student.FirstName, student.MiddleName}, " "))
+		if fullName == "" {
+			fullName = "Unknown"
 		}
 
 		fmt.Printf("Student: %s\n", fullName)
@@ -226,14 +223,12 @@ var fetchThemeCmd = &cobra.Command{
 
 		themeID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("Invalid theme ID '%s': %v\n", args[0], err)
-			return
+			exitErrf("Invalid theme ID %q: %v", args[0], err)
 		}
 
 		theme, err := client.GetTheme(ctx, themeID)
 		if err != nil {
-			fmt.Printf("Failed to fetch theme: %v\n", err)
-			return
+			exitErrf("Failed to fetch theme: %v", err)
 		}
 
 		fmt.Printf("Theme: %s (ID: %d)\n", theme.Name, theme.ID)
@@ -258,14 +253,12 @@ var fetchLongreadCmd = &cobra.Command{
 
 		longreadID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Printf("Invalid longread ID '%s': %v\n", args[0], err)
-			return
+			exitErrf("Invalid longread ID %q: %v", args[0], err)
 		}
 
 		longread, err := client.GetLongread(ctx, longreadID)
 		if err != nil {
-			fmt.Printf("Failed to fetch longread: %v\n", err)
-			return
+			exitErrf("Failed to fetch longread: %v", err)
 		}
 
 		fmt.Printf("Longread: %s (ID: %d)\n", longread.Name, longread.ID)

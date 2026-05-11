@@ -88,6 +88,7 @@ func (s *ClientTestSuite) handleCurrentStudent(w http.ResponseWriter, _ *http.Re
 }
 
 func (s *ClientTestSuite) handleCourseSummary(w http.ResponseWriter, _ *http.Request) {
+	publishedAt := time.Date(2025, 1, 15, 10, 30, 0, 0, time.UTC)
 	course := Course{
 		ID:            519,
 		Name:          "Case Evenings (Кейс-вечера)",
@@ -95,8 +96,8 @@ func (s *ClientTestSuite) handleCourseSummary(w http.ResponseWriter, _ *http.Req
 		Category:      "development",
 		CategoryCover: "cover.png",
 		IsArchived:    false,
-		PublishDate:   &time.Time{},
-		PublishedAt:   &time.Time{},
+		PublishDate:   nil,
+		PublishedAt:   &publishedAt,
 		Settings: CourseSettings{
 			SkillLevel:          "none",
 			IsSkillLevelEnabled: false,
@@ -143,13 +144,14 @@ func (s *ClientTestSuite) handleCourseOverview(w http.ResponseWriter, _ *http.Re
 }
 
 func (s *ClientTestSuite) handleThemeSummary(w http.ResponseWriter, _ *http.Request) {
+	publishedAt := time.Date(2025, 2, 1, 9, 0, 0, 0, time.UTC)
 	theme := Theme{
 		ID:          4399,
 		Name:        "Силлабус",
 		Order:       1,
 		State:       "published",
-		PublishDate: &time.Time{},
-		PublishedAt: &time.Time{},
+		PublishDate: nil,
+		PublishedAt: &publishedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -157,14 +159,15 @@ func (s *ClientTestSuite) handleThemeSummary(w http.ResponseWriter, _ *http.Requ
 }
 
 func (s *ClientTestSuite) handleLongreadSummary(w http.ResponseWriter, _ *http.Request) {
+	publishedAt := time.Date(2025, 2, 2, 12, 0, 0, 0, time.UTC)
 	longread := Longread{
 		ID:          7739,
 		Type:        "common",
 		Name:        "Ссылка на силлабус",
 		State:       "published",
 		Order:       2,
-		PublishDate: &time.Time{},
-		PublishedAt: &time.Time{},
+		PublishDate: nil,
+		PublishedAt: &publishedAt,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -335,6 +338,9 @@ func (s *ClientTestSuite) TestGetCourse_Success() {
 	s.Equal("Case Evenings (Кейс-вечера)", course.Name)
 	s.Equal("development", course.Category)
 	s.Equal("cover.png", course.CategoryCover)
+	s.Nil(course.PublishDate)
+	s.Require().NotNil(course.PublishedAt)
+	s.Equal(2025, course.PublishedAt.Year())
 }
 
 func (s *ClientTestSuite) TestGetTheme_Success() {
@@ -345,6 +351,8 @@ func (s *ClientTestSuite) TestGetTheme_Success() {
 	s.Equal(4399, theme.ID)
 	s.Equal("Силлабус", theme.Name)
 	s.Equal(1, theme.Order)
+	s.Nil(theme.PublishDate)
+	s.Require().NotNil(theme.PublishedAt)
 }
 
 func (s *ClientTestSuite) TestGetLongread_Success() {
@@ -355,6 +363,8 @@ func (s *ClientTestSuite) TestGetLongread_Success() {
 	s.Equal(7739, longread.ID)
 	s.Equal("Ссылка на силлабус", longread.Name)
 	s.Equal(2, longread.Order)
+	s.Nil(longread.PublishDate)
+	s.Require().NotNil(longread.PublishedAt)
 }
 
 func (s *ClientTestSuite) TestGetStudentCourses_WithLimit() {

@@ -82,6 +82,16 @@ export CU_BFF_COOKIE="ваше-значение-cookie"
 - `cu fetch theme <theme-id>` — краткая информация о теме
 - `cu fetch longread <longread-id>` — краткая информация о лонгриде
 
+### Обновление MCP-сервера
+
+После `make install` запущенные хосты (Claude Code, IDE) продолжают держать
+старый процесс — новые тулы и фиксы не подхватятся. После переустановки
+перезапустите сервер в хосте:
+
+```bash
+claude mcp restart cu   # или /mcp reconnect в Claude Code
+```
+
 ### Быстрый пример
 
 ```bash

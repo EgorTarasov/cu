@@ -17,13 +17,14 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	LongreadID int `json:"longread_id" jsonschema:"Longread ID"`
+	LongreadID int `json:"longread_id" jsonschema:"Numeric longread ID (obtain from get_course_structure)"`
 }
 
 // Definition is the MCP tool definition.
 var Definition = &mcp.Tool{
-	Name:        "get_longread_summary",
-	Description: "Get longread summary info: name, type, state, order, publish dates",
+	Name: "get_longread_summary",
+	Description: "Get longread summary info: name, type, state, order, publish dates. " +
+		"Requires a numeric longread_id — discover it via get_course_structure.",
 }
 
 // NewHandler creates the tool handler.
