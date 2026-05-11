@@ -7,21 +7,43 @@
 
 ## Установка
 
+### Одной командой (macOS, Linux: Ubuntu/Fedora, amd64/arm64)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
+```
+
+Скрипт скачивает последний релиз с GitHub, проверяет sha256, ставит бинарь в
+`~/.local/bin/cu` и снимает quarantine-атрибут на macOS. Опции:
+
+```bash
+# Конкретная версия
+curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | CU_VERSION=v0.1.5 sh
+
+# Системная установка
+curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | CU_INSTALL_DIR=/usr/local/bin sh
+```
+
+### Бинарь вручную
+
+Скачайте подходящий архив со страницы [Releases](https://github.com/EgorTarasov/cu/releases),
+сверьте sha256 по `checksums.txt`, распакуйте `cu` куда-то в PATH (`~/.local/bin` или `/usr/local/bin`),
+сделайте исполняемым.
+
 ### Из исходного кода
 
 ```bash
-git clone <repository-url>
-cd cu_sync
-go build -o cu ./cmd/cli
+git clone https://github.com/EgorTarasov/cu.git
+cd cu
+make install         # собирает в bin/cu и копирует в $GOPATH/bin
+# или просто:
+make build           # bin/cu
 ```
 
-### Быстрый старт
+### Проверка
 
 ```bash
-# Переместите исполняемый файл в PATH (опционально)
-sudo mv cu /usr/local/bin/
-
-# Проверьте установку
+cu --version
 cu --help
 ```
 
