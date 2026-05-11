@@ -30,7 +30,6 @@ Thumbs.db
 bin/
 build/
 dist/
-/cu
 
 
 coverage.html

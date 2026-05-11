@@ -18,13 +18,14 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	Course string `json:"course" jsonschema:"Course name or ID"`
+	Course string `json:"course" jsonschema:"Course name (case-insensitive substring) or numeric ID as a string"`
 }
 
 // Definition is the MCP tool definition.
 var Definition = &mcp.Tool{
-	Name:        "get_course_summary",
-	Description: "Get course summary info: state, category, publish dates, archived flag",
+	Name: "get_course_summary",
+	Description: "Get course summary info: state, category, skill level, publish dates, archived flag. " +
+		"Accepts a course name (resolved via substring match) or numeric ID.",
 }
 
 // NewHandler creates the tool handler.

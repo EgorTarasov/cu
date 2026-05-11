@@ -7,4 +7,6 @@ var RootCmd = &cobra.Command{
 	Short: "Central University CLI Tool",
 	Long: `CU is a command-line tool for interacting with Central University services.
 It provides access to courses, authentication, and data synchronization.`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }

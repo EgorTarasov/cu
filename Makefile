@@ -3,8 +3,10 @@
 
 # Variables
 BINARY_NAME=cu
+BIN_DIR=bin
 BUILD_DIR=build
 CMD_DIR=cmd/cli
+INSTALL_DIR?=$(shell go env GOPATH)/bin
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 DATE?=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -18,8 +20,8 @@ all: test build
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -rf $(BIN_DIR)
 	rm -f $(BINARY_NAME)
-	rm -f bin/cu
 
 # Download dependencies
 .PHONY: deps
@@ -41,12 +43,23 @@ test-coverage: test
 # Build for current platform
 .PHONY: build
 build:
-	go build $(LDFLAGS) -o $(BINARY_NAME) ./$(CMD_DIR)
+	@mkdir -p $(BIN_DIR)
+	go build $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) ./$(CMD_DIR)
 
-# Install to GOPATH/bin
+# Install to $(INSTALL_DIR) (defaults to $GOPATH/bin).
+# Builds then atomically replaces the existing binary — works even when an MCP
+# process holds the old inode open (where `go install` would silently no-op).
+# Re-signs on macOS so the new binary keeps its entitlements.
 .PHONY: install
-install:
-	go install $(LDFLAGS) ./$(CMD_DIR)
+install: build
+	@mkdir -p $(INSTALL_DIR)
+	cp $(BIN_DIR)/$(BINARY_NAME) $(INSTALL_DIR)/$(BINARY_NAME)
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		codesign --force --sign - $(INSTALL_DIR)/$(BINARY_NAME) 2>/dev/null || true; \
+	fi
+	@echo "Installed $(INSTALL_DIR)/$(BINARY_NAME)"
+	@echo "If Claude Code (or another host) has the MCP server running, restart it:"
+	@echo "  claude mcp restart cu"
 
 # Build for all platforms
 .PHONY: build-all
@@ -125,12 +138,12 @@ lint-all: lint gofumpt golangci-lint
 # Run the application (requires CU_BFF_COOKIE environment variable)
 .PHONY: run
 run: build
-	./$(BINARY_NAME) $(ARGS)
+	$(BIN_DIR)/$(BINARY_NAME) $(ARGS)
 
 # Run with example command
 .PHONY: run-help
 run-help: build
-	./$(BINARY_NAME) --help
+	$(BIN_DIR)/$(BINARY_NAME) --help
 
 # Show help
 .PHONY: help

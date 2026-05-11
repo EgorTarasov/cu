@@ -17,13 +17,14 @@ type LMSClient interface {
 
 // Input for the tool.
 type Input struct {
-	ThemeID int `json:"theme_id" jsonschema:"Theme ID"`
+	ThemeID int `json:"theme_id" jsonschema:"Numeric theme ID (obtain from get_course_structure)"`
 }
 
 // Definition is the MCP tool definition.
 var Definition = &mcp.Tool{
-	Name:        "get_theme_summary",
-	Description: "Get theme summary info: name, state, order, publish dates",
+	Name: "get_theme_summary",
+	Description: "Get theme summary info: name, state, order, publish dates. " +
+		"Requires a numeric theme_id — discover it via get_course_structure.",
 }
 
 // NewHandler creates the tool handler.

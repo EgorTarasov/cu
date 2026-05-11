@@ -569,6 +569,7 @@ components:
           type: integer
         percentage:
           type: number
+          format: float
 
     StudentCourse:
       type: object
