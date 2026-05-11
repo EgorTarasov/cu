@@ -2,10 +2,7 @@ package cu
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -15,11 +12,7 @@ import (
 const maxCoursesLimit = 10000
 
 func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string) (*StudentCoursesResponse, error) {
-	if c.bffCookie == "" {
-		return nil, errors.New("bff.cookie is required for authentication")
-	}
-
-	endpoint := "/api/micro-lms/courses/student"
+	endpoint := StudentCoursesEndpoint
 	params := url.Values{}
 	if limit > 0 {
 		params.Set("limit", strconv.Itoa(limit))
@@ -27,70 +20,23 @@ func (c *Client) GetStudentCourses(ctx context.Context, limit int, state string)
 	if state != "" {
 		params.Set("state", state)
 	}
-
 	if len(params) > 0 {
 		endpoint += "?" + params.Encode()
 	}
 
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
-	}
-
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var apiErr APIError
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-			return nil, fmt.Errorf("HTTP %d: failed to decode error response", resp.StatusCode)
-		}
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, apiErr.Error())
-	}
-
-	var courses StudentCoursesResponse
-	if err = json.NewDecoder(resp.Body).Decode(&courses); err != nil {
-		return nil, fmt.Errorf("failed to decode student courses response: %w", err)
-	}
-
-	return &courses, nil
+	return doJSON[StudentCoursesResponse](ctx, c, endpoint)
 }
 
 func (c *Client) GetCourseOverview(ctx context.Context, courseID int) (*CourseOverview, error) {
-	if c.bffCookie == "" {
-		return nil, errors.New("bff.cookie is required for authentication")
-	}
+	return doJSON[CourseOverview](ctx, c, fmt.Sprintf(CourseOverviewEndpoint, courseID))
+}
 
-	endpoint := fmt.Sprintf(CourseOverviewEndpoint, courseID)
+func (c *Client) GetCourse(ctx context.Context, courseID int) (*Course, error) {
+	return doJSON[Course](ctx, c, fmt.Sprintf(CourseEndpoint, courseID))
+}
 
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
-	}
-
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		var apiErr APIError
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-			return nil, fmt.Errorf("HTTP %d: failed to decode error response", resp.StatusCode)
-		}
-		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, apiErr.Error())
-	}
-
-	var courseOverview CourseOverview
-	if err = json.NewDecoder(resp.Body).Decode(&courseOverview); err != nil {
-		return nil, fmt.Errorf("failed to decode course overview response: %w", err)
-	}
-
-	return &courseOverview, nil
+func (c *Client) GetTheme(ctx context.Context, themeID int) (*Theme, error) {
+	return doJSON[Theme](ctx, c, fmt.Sprintf(ThemeEndpoint, themeID))
 }
 
 // ResolveCourse finds a course by ID (numeric string) or by substring match on course name.
@@ -160,136 +106,36 @@ func (c *Client) GetDeadlines(ctx context.Context, limit int, courseID *int) ([]
 	if courseID != nil {
 		params.Set("courseId", strconv.Itoa(*courseID))
 	}
-	endpoint := "/api/micro-lms/deadlines?" + params.Encode()
+	endpoint := DeadlinesEndpoint + "?" + params.Encode()
 
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
+	out, err := doJSON[[]Deadline](ctx, c, endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
+		return nil, err
 	}
-
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	var deadlines []Deadline
-	if err = json.NewDecoder(resp.Body).Decode(&deadlines); err != nil {
-		return nil, fmt.Errorf("failed to decode deadlines: %w", err)
-	}
-	return deadlines, nil
+	return *out, nil
 }
 
 // GetCourseProgress fetches the student's overall score in a course.
 func (c *Client) GetCourseProgress(ctx context.Context, courseID int) (*CourseProgress, error) {
-	endpoint := fmt.Sprintf("/api/micro-lms/courses/%d/student/progress", courseID)
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	var p CourseProgress
-	if err = json.NewDecoder(resp.Body).Decode(&p); err != nil {
-		return nil, err
-	}
-	return &p, nil
+	return doJSON[CourseProgress](ctx, c, fmt.Sprintf(CourseProgressEndpoint, courseID))
 }
 
 // GetStudentPerformance fetches per-exercise scores for a course.
 func (c *Client) GetStudentPerformance(ctx context.Context, courseID int) (*StudentPerformance, error) {
-	endpoint := fmt.Sprintf("/api/micro-lms/courses/%d/student-performance", courseID)
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	var sp StudentPerformance
-	if err = json.NewDecoder(resp.Body).Decode(&sp); err != nil {
-		return nil, err
-	}
-	return &sp, nil
+	return doJSON[StudentPerformance](ctx, c, fmt.Sprintf(StudentPerformanceEndpoint, courseID))
 }
 
 // GetActivitiesPerformance fetches performance grouped by activity type.
 func (c *Client) GetActivitiesPerformance(ctx context.Context, courseID int) (*ActivitiesPerformance, error) {
-	endpoint := fmt.Sprintf("/api/micro-lms/courses/%d/activities-performance", courseID)
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	var ap ActivitiesPerformance
-	if err = json.NewDecoder(resp.Body).Decode(&ap); err != nil {
-		return nil, err
-	}
-	return &ap, nil
+	return doJSON[ActivitiesPerformance](ctx, c, fmt.Sprintf(ActivitiesPerformanceEndpoint, courseID))
 }
 
 // GetCourseExercises fetches all exercises for a course.
 func (c *Client) GetCourseExercises(ctx context.Context, courseID int) (*CourseExercises, error) {
-	endpoint := fmt.Sprintf("/api/micro-lms/courses/%d/exercises", courseID)
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	var ce CourseExercises
-	if err = json.NewDecoder(resp.Body).Decode(&ce); err != nil {
-		return nil, err
-	}
-	return &ce, nil
+	return doJSON[CourseExercises](ctx, c, fmt.Sprintf(CourseExercisesEndpoint, courseID))
 }
 
 // GetTask fetches a single task by ID.
 func (c *Client) GetTask(ctx context.Context, taskID int) (*Task, error) {
-	endpoint := fmt.Sprintf("/api/micro-lms/tasks/%d", taskID)
-	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.executeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	var t Task
-	if err = json.NewDecoder(resp.Body).Decode(&t); err != nil {
-		return nil, err
-	}
-	return &t, nil
+	return doJSON[Task](ctx, c, fmt.Sprintf(TaskEndpoint, taskID))
 }

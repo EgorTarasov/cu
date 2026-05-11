@@ -35,8 +35,7 @@ var Definition = &mcp.Tool{
 
 // NewHandler creates the tool handler.
 func NewHandler(lms LMSClient) func(context.Context, *mcp.CallToolRequest, Input) (*mcp.CallToolResult, any, error) {
-	return func(_ context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
-		ctx := context.Background()
+	return func(ctx context.Context, _ *mcp.CallToolRequest, in Input) (*mcp.CallToolResult, any, error) {
 		uc := ucGrades.New(lms)
 
 		if in.Course == "" {

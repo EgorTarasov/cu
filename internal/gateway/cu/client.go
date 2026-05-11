@@ -13,7 +13,20 @@ const (
 	BaseURL       = "https://my.centraluniversity.ru"
 	GitLabBaseURL = "https://git.culab.ru"
 
-	CourseOverviewEndpoint = "/api/micro-lms/courses/%d/overview"
+	CourseEndpoint                = "/api/micro-lms/courses/%d"
+	CourseOverviewEndpoint        = "/api/micro-lms/courses/%d/overview"
+	CourseProgressEndpoint        = "/api/micro-lms/courses/%d/student/progress"
+	StudentPerformanceEndpoint    = "/api/micro-lms/courses/%d/student-performance"
+	ActivitiesPerformanceEndpoint = "/api/micro-lms/courses/%d/activities-performance"
+	CourseExercisesEndpoint       = "/api/micro-lms/courses/%d/exercises"
+	StudentCoursesEndpoint        = "/api/micro-lms/courses/student"
+	ThemeEndpoint                 = "/api/micro-lms/themes/%d"
+	LongreadEndpoint              = "/api/micro-lms/longreads/%d"
+	LongreadMaterialsEndpoint     = "/api/micro-lms/longreads/%d/materials"
+	CurrentStudentEndpoint        = "/api/micro-lms/students/me"
+	TaskEndpoint                  = "/api/micro-lms/tasks/%d"
+	DeadlinesEndpoint             = "/api/micro-lms/deadlines"
+	DownloadLinkEndpoint          = "/api/micro-lms/content/download-link"
 
 	DefaultTimeout = 30 * time.Second
 )

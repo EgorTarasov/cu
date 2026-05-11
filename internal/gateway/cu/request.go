@@ -2,6 +2,8 @@ package cu
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -45,4 +47,38 @@ func (c *Client) executeRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+// doJSON performs an authenticated GET request and decodes the JSON response into *T.
+// Returns an error if bff.cookie is missing, the request fails, or the response is non-2xx.
+func doJSON[T any](ctx context.Context, c *Client, endpoint string) (*T, error) {
+	if c.bffCookie == "" {
+		return nil, errors.New("bff.cookie is required for authentication")
+	}
+
+	req, err := c.prepareRequest(ctx, http.MethodGet, endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare request: %w", err)
+	}
+
+	resp, err := c.executeRequest(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var apiErr APIError
+		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+			return nil, fmt.Errorf("HTTP %d: failed to decode error response", resp.StatusCode)
+		}
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, apiErr.Error())
+	}
+
+	var out T
+	if err = json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &out, nil
 }
