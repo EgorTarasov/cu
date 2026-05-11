@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: GoReleaser
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-release-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-release-
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          notes_file="/tmp/release-notes.md"
+          chmod +x scripts/extract-changelog.sh
+          scripts/extract-changelog.sh "$version" > "$notes_file"
+          if [ ! -s "$notes_file" ]; then
+            echo "Release v${version}" > "$notes_file"
+            echo "::warning::CHANGELOG.md had no notes for v${version} — using default."
+          fi
+          echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean --release-notes=${{ steps.notes.outputs.notes_file }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  rotate-changelog:
+    name: Rotate CHANGELOG.md
+    runs-on: ubuntu-latest
+    needs: release
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rotate [Unreleased] -> [version]
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          chmod +x scripts/rotate-changelog.sh
+          scripts/rotate-changelog.sh "$version"
+
+      - name: Commit rotation
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changelog changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: rotate CHANGELOG.md after v${version} [skip ci]"
+          git push origin main

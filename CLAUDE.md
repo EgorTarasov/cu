@@ -291,6 +291,66 @@ git push --force-with-lease
 Перед коммитом всегда: `make lint && go test ./...`. Если правок много —
 прогоняйте после каждой логической группы, не в конце.
 
+## Релизы и CHANGELOG
+
+### Поток
+
+1. **`main` → авто-тег** (`.github/workflows/release-tag.yml`). Каждый пуш в
+   `main` бампит patch и пушит тег `v0.1.N`. Major/minor — руками через
+   `git tag` или GitHub UI.
+2. **Тег `v*` → GoReleaser** (`.github/workflows/release.yml`). Собирает
+   `linux/{amd64,arm64}`, `darwin/{amd64,arm64}`, `windows/amd64`, кладёт в
+   `tar.gz`/`zip` вместе с README/CHANGELOG/LICENSE, считает общий
+   `checksums.txt`, публикует Release.
+3. **После релиза CHANGELOG.md ротируется автоматически**: `[Unreleased]`
+   переименовывается в `[<version>] - <date>`, сверху создаётся новый пустой
+   `[Unreleased]`, коммит уходит в `main` с `[skip ci]`.
+
+Тело релиза = содержимое секции `[Unreleased]` на момент тега, извлечённое
+скриптом `scripts/extract-changelog.sh`. Если секция пуста — workflow
+подставит `Release v<version>` и оставит warning в логах.
+
+### Правила работы с CHANGELOG.md
+
+- **Любая фича/фикс, видимая пользователю, добавляется в `[Unreleased]`
+  в том же PR/коммите, что и изменение кода.** Не в отдельном «changelog
+  PR».
+- Секции — `### Added`, `### Changed`, `### Fixed`, `### Removed`,
+  `### Security` (Keep-a-Changelog). Опускайте те, что пустые.
+- Записи — для пользователя, не для коммита. «Добавили MCP-тул
+  `get_theme_summary`», а не «refactor: extracted handler». Внутренний
+  рефакторинг в changelog не пишем.
+
+### Перед релизом — обязательный вопрос инженеру
+
+Прежде чем рекомендовать пуш в `main` (или вручную тегать), **спросите
+владельца изменений**:
+
+> «Отражает ли текущий `[Unreleased]` всё, что реально вошло в этот релиз?»
+
+Это страховка от двух типичных ошибок:
+
+1. **Дрейф changelog от реальности.** Кто-то закоммитил фичу без записи в
+   CHANGELOG. Авто-релиз уйдёт с пропуском — пользователь не узнает.
+2. **Записи без кода.** Кто-то добавил в `[Unreleased]` запись, а фича
+   откатилась/не доехала. Релиз обещает то, чего нет.
+
+Не делайте этот checkpoint автоматическим — он именно про человеческую
+сверку. В сомнительных случаях сравните `[Unreleased]` с
+`git log <prev-tag>..HEAD --oneline` и явно перечислите расхождения.
+
+### Установка из релиза
+
+Конечный пользователь ставит через `install.sh` (или ручной скачкой архива):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
+```
+
+Скрипт детектит OS/ARCH, тянет последний release, проверяет sha256,
+ставит в `~/.local/bin`, на macOS снимает quarantine. См. README/install.sh
+для опций (`CU_VERSION`, `CU_INSTALL_DIR`).
+
 ## Эволюция API
 
 `api-spec.yaml` в корне — поверхностное описание схем API LMS. **Должно
