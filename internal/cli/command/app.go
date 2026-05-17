@@ -9,4 +9,5 @@ func init() {
 	RootCmd.AddCommand(taskCmd)
 	RootCmd.AddCommand(coursesCmd)
 	RootCmd.AddCommand(mcpCmd)
+	RootCmd.AddCommand(mmCmd)
 }
