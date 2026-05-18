@@ -16,8 +16,8 @@ const (
 	CookieSessionToken = "sessionToken"
 
 	EnvBaseURL      = "CU_KTALK_BASE_URL"
-	EnvNgToken      = "CU_KTALK_NG_TOKEN"      //nolint:gosec // env var name
-	EnvSessionToken = "CU_KTALK_SESSION_TOKEN" //nolint:gosec // env var name
+	EnvNgToken      = "CU_KTALK_NG_TOKEN"      // #nosec G101 -- env var name, not a credential
+	EnvSessionToken = "CU_KTALK_SESSION_TOKEN" // #nosec G101 -- env var name, not a credential
 )
 
 // RequiredCookies are the readiness markers: login is considered complete
