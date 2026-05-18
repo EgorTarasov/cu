@@ -17,8 +17,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const showCoursesLimit = 10000
-
 var showCmd = &cobra.Command{
 	Use:   "show [query]",
 	Short: "Pick a course interactively and print its full structure",
@@ -32,11 +30,13 @@ permalinks per longread/course.`,
 		ctx := cmd.Context()
 		client := mustClient()
 
-		all, err := client.GetStudentCourses(ctx, showCoursesLimit, "published")
+		active, archived, err := client.GetAllCourses(ctx)
 		if err != nil {
 			exitErrf("Fetch courses: %v", err)
 		}
-		if len(all.Items) == 0 {
+		all := append([]cugw.StudentCourse(nil), active...)
+		all = append(all, archived...)
+		if len(all) == 0 {
 			fmt.Println("No courses found.")
 			return
 		}
@@ -48,11 +48,18 @@ permalinks per longread/course.`,
 			query = strings.TrimSpace(line)
 		}
 
-		matches := fuzzyCourses(all.Items, query)
+		matches := fuzzyCourses(all, query)
 		if len(matches) == 0 {
 			fmt.Printf("No course matched %q. Available:\n\n", query)
-			for i, c := range all.Items {
+			fmt.Printf("Active (%d):\n", len(active))
+			for i, c := range active {
 				fmt.Printf("  %d. [%d] %s\n", i+1, c.ID, c.Name)
+			}
+			if len(archived) > 0 {
+				fmt.Printf("\nArchived (%d):\n", len(archived))
+				for i, c := range archived {
+					fmt.Printf("  %d. [%d] %s\n", i+1, c.ID, c.Name)
+				}
 			}
 			return
 		}
@@ -64,7 +71,11 @@ permalinks per longread/course.`,
 		default:
 			fmt.Printf("Matched %d courses:\n", len(matches))
 			for i, c := range matches {
-				fmt.Printf("  [%d] %s (id %d)\n", i+1, c.Name, c.ID)
+				tag := ""
+				if c.IsArchived {
+					tag = " [archived]"
+				}
+				fmt.Printf("  [%d] %s (id %d)%s\n", i+1, c.Name, c.ID, tag)
 			}
 			fmt.Print("\nPick [number]: ")
 			line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -88,6 +99,14 @@ permalinks per longread/course.`,
 func fuzzyCourses(items []cugw.StudentCourse, query string) []cugw.StudentCourse {
 	if query == "" {
 		return items
+	}
+	if id, err := strconv.Atoi(strings.TrimSpace(query)); err == nil {
+		for _, c := range items {
+			if c.ID == id {
+				return []cugw.StudentCourse{c}
+			}
+		}
+		return nil
 	}
 	tokens := strings.Fields(strings.ToLower(query))
 	var out []cugw.StudentCourse

@@ -23,9 +23,15 @@ var coursesCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("Your courses (%d)\n\n", len(result.Items))
-		for i, course := range result.Items {
+		fmt.Printf("Active (%d)\n\n", len(result.Active))
+		for i, course := range result.Active {
 			fmt.Printf("  %d. [%d] %s\n", i+1, course.ID, course.Name)
+		}
+		if len(result.Archived) > 0 {
+			fmt.Printf("\nArchived (%d)\n\n", len(result.Archived))
+			for i, course := range result.Archived {
+				fmt.Printf("  %d. [%d] %s [archived]\n", i+1, course.ID, course.Name)
+			}
 		}
 		fmt.Println("\nUse course ID or name with other commands:")
 		fmt.Println("  cu deadlines go")

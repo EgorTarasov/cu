@@ -7,14 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	cugw "github.com/EgorTarasov/cu/internal/gateway/cu"
 	"github.com/EgorTarasov/cu/internal/model"
 	"github.com/EgorTarasov/cu/internal/render"
 	"github.com/EgorTarasov/cu/internal/usecase/materials"
 
 	"github.com/spf13/cobra"
 )
-
-const maxCoursesLimit = 10000
 
 func init() {
 	fetchCourseCmd.Flags().String("path", ".", "path to save the course data")
@@ -110,27 +109,34 @@ var fetchCoursesCmd = &cobra.Command{
 		ctx := cmd.Context()
 		client := mustClient()
 
-		courses, err := client.GetStudentCourses(ctx, maxCoursesLimit, "published")
+		active, archived, err := client.GetAllCourses(ctx)
 		if err != nil {
 			exitErrf("Failed to fetch courses: %v", err)
 		}
 
-		fmt.Printf("Found %d courses\n\n", len(courses.Items))
-		for i, course := range courses.Items {
-			fmt.Printf("%d. %s (ID: %d)\n", i+1, course.Name, course.ID)
-			fmt.Printf("   State: %s | Archived: %v\n", course.State, course.IsArchived)
+		printCoursesSection := func(title string, courses []cugw.StudentCourse) {
+			fmt.Printf("%s (%d)\n\n", title, len(courses))
+			for i, course := range courses {
+				fmt.Printf("%d. %s (ID: %d)\n", i+1, course.Name, course.ID)
+				fmt.Printf("   State: %s | Archived: %v\n", course.State, course.IsArchived)
 
-			if course.PublishedAt != nil {
-				fmt.Printf("   Published: %s\n", course.PublishedAt.Format("2006-01-02 15:04:05"))
-			}
+				if course.PublishedAt != nil {
+					fmt.Printf("   Published: %s\n", course.PublishedAt.Format("2006-01-02 15:04:05"))
+				}
 
-			if course.Progress != nil {
-				fmt.Printf("   Progress: %d/%d (%.1f%%)\n",
-					course.Progress.CompletedCount,
-					course.Progress.TotalCount,
-					course.Progress.Percentage)
+				if course.Progress != nil {
+					fmt.Printf("   Progress: %d/%d (%.1f%%)\n",
+						course.Progress.CompletedCount,
+						course.Progress.TotalCount,
+						course.Progress.Percentage)
+				}
+				fmt.Println()
 			}
-			fmt.Println()
+		}
+
+		printCoursesSection("Active", active)
+		if len(archived) > 0 {
+			printCoursesSection("Archived", archived)
 		}
 	},
 }

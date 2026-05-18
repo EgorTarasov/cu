@@ -12,6 +12,20 @@
 
 ## [Unreleased]
 
+### Added
+- Поддержка архивных курсов в листингах и поиске: `cu courses`, `cu fetch courses`,
+  `cu show` и MCP-тулы `list_courses` / `search_courses` теперь возвращают
+  активные и архивные курсы отдельными секциями с пометкой статуса. Архивные
+  тянутся через `/api/micro-lms/courses/student?state=archived`.
+
+### Changed
+- `ResolveCourse` (по имени/ID) ищет как среди активных, так и среди архивных
+  курсов — раньше архивные были невидимы, и обращаться к ним приходилось только
+  по numeric ID через `get_course_summary`/`get_course_structure`.
+- `api-spec.yaml`: `GET /micro-lms/courses/student` теперь явно описывает
+  `state=archived` (плюс `offset`); у `/courses/{id}/overview` отмечено, что
+  путь общий для активных и архивных курсов.
+
 ## [0.1.3] - 2026-05-17
 
 ### Added

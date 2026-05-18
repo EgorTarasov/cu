@@ -205,7 +205,20 @@ func (s *ClientTestSuite) handleStudentCourses(w http.ResponseWriter, r *http.Re
 		},
 	}
 
-	if state != "" && state != "published" {
+	if state == "archived" {
+		items = []StudentCourse{
+			{
+				ID:         400,
+				Name:       "Legacy Programming",
+				State:      "published",
+				IsArchived: true,
+				Settings: CourseSettings{
+					SkillLevel:          "none",
+					IsSkillLevelEnabled: false,
+				},
+			},
+		}
+	} else if state != "" && state != "published" {
 		items = []StudentCourse{}
 	}
 
@@ -404,4 +417,30 @@ func (s *ClientTestSuite) TestGetStudentCourses_InvalidCookie() {
 	_, err := client.GetStudentCourses(ctx, 10000, "published")
 	s.Require().Error(err)
 	s.Contains(err.Error(), "HTTP 401")
+}
+
+func (s *ClientTestSuite) TestGetAllCourses_Success() {
+	ctx := s.T().Context()
+	active, archived, err := s.client.GetAllCourses(ctx)
+	s.Require().NoError(err)
+	s.Len(active, 2)
+	s.False(active[0].IsArchived)
+	s.Require().Len(archived, 1)
+	s.Equal(400, archived[0].ID)
+	s.True(archived[0].IsArchived)
+}
+
+func (s *ClientTestSuite) TestResolveCourse_ArchivedFallbackByID() {
+	ctx := s.T().Context()
+	id, name, err := s.client.ResolveCourse(ctx, "400")
+	s.Require().NoError(err)
+	s.Equal(400, id)
+	s.Equal("Legacy Programming", name)
+}
+
+func (s *ClientTestSuite) TestResolveCourse_ArchivedFallbackByName() {
+	ctx := s.T().Context()
+	id, _, err := s.client.ResolveCourse(ctx, "legacy")
+	s.Require().NoError(err)
+	s.Equal(400, id)
 }

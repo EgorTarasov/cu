@@ -10,11 +10,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const maxCoursesLimit = 10000
-
 // LMSClient defines dependencies for this tool.
 type LMSClient interface {
-	GetStudentCourses(ctx context.Context, limit int, state string) (*cuGw.StudentCoursesResponse, error)
+	GetAllCourses(ctx context.Context) (active, archived []cuGw.StudentCourse, err error)
 }
 
 // Input for the tool (empty for list_courses).
@@ -23,18 +21,18 @@ type Input struct{}
 // Definition is the MCP tool definition.
 var Definition = &mcp.Tool{
 	Name:        "list_courses",
-	Description: "List all student courses with IDs and categories",
+	Description: "List student courses split into Active and Archived sections, with IDs and categories",
 }
 
 // NewHandler creates the tool handler.
 func NewHandler(lms LMSClient) func(context.Context, *mcp.CallToolRequest, Input) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, _ *mcp.CallToolRequest, _ Input) (*mcp.CallToolResult, any, error) {
-		resp, err := lms.GetStudentCourses(ctx, maxCoursesLimit, "published")
+		active, archived, err := lms.GetAllCourses(ctx)
 		if err != nil {
 			return textResult(fmt.Sprintf("Error: %v", err)), nil, nil
 		}
 
-		return textResult(mcpfmt.CoursesList(resp.Items)), nil, nil
+		return textResult(mcpfmt.CoursesList(active, archived)), nil, nil
 	}
 }
 

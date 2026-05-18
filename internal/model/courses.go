@@ -3,10 +3,12 @@ package model
 type CoursesListInput struct{}
 
 type CourseItem struct {
-	ID   int
-	Name string
+	ID         int
+	Name       string
+	IsArchived bool
 }
 
 type CoursesListOutput struct {
-	Items []CourseItem
+	Active   []CourseItem
+	Archived []CourseItem
 }

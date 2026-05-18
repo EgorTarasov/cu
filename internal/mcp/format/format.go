@@ -10,39 +10,53 @@ import (
 	materialsUC "github.com/EgorTarasov/cu/internal/usecase/materials"
 )
 
-func CoursesList(courses []cu.StudentCourse) string {
+func CoursesList(active, archived []cu.StudentCourse) string {
 	var b strings.Builder
 	b.WriteString("## Your Courses\n\n")
+
+	writeCoursesSection(&b, "Active", active)
+	if len(archived) > 0 {
+		b.WriteString("\n")
+		writeCoursesSection(&b, "Archived", archived)
+	}
+
+	fmt.Fprintf(&b, "\n%d active, %d archived.\n", len(active), len(archived))
+	return b.String()
+}
+
+func writeCoursesSection(b *strings.Builder, title string, courses []cu.StudentCourse) {
+	fmt.Fprintf(b, "### %s (%d)\n\n", title, len(courses))
+	if len(courses) == 0 {
+		b.WriteString("_none_\n")
+		return
+	}
 	b.WriteString("| ID | Name | Category |\n")
 	b.WriteString("|-----|------|----------|\n")
-
 	for _, c := range courses {
 		cat := c.Category
 		if cat == "" {
 			cat = "-"
 		}
-
-		fmt.Fprintf(&b, "| %d | %s | %s |\n", c.ID, c.Name, cat)
+		fmt.Fprintf(b, "| %d | %s | %s |\n", c.ID, c.Name, cat)
 	}
-
-	fmt.Fprintf(&b, "\n%d courses total.\n", len(courses))
-	return b.String()
 }
 
-func SearchResults(courses []cu.StudentCourse, query string) string {
+func SearchResults(active, archived []cu.StudentCourse, query string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "## Search: %q\n\n", query)
 
-	if len(courses) == 0 {
+	if len(active) == 0 && len(archived) == 0 {
 		b.WriteString("No courses found.\n")
 		return b.String()
 	}
 
-	b.WriteString("| ID | Name |\n")
-	b.WriteString("|-----|------|\n")
-
-	for _, c := range courses {
-		fmt.Fprintf(&b, "| %d | %s |\n", c.ID, c.Name)
+	b.WriteString("| ID | Name | Status |\n")
+	b.WriteString("|-----|------|--------|\n")
+	for _, c := range active {
+		fmt.Fprintf(&b, "| %d | %s | active |\n", c.ID, c.Name)
+	}
+	for _, c := range archived {
+		fmt.Fprintf(&b, "| %d | %s | archived |\n", c.ID, c.Name)
 	}
 
 	return b.String()
