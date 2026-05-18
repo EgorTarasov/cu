@@ -26,6 +26,7 @@ import (
 type LMSClient interface {
 	GetCurrentStudent(ctx context.Context) (*cu.Student, error)
 	GetStudentCourses(ctx context.Context, limit int, state string) (*cu.StudentCoursesResponse, error)
+	GetAllCourses(ctx context.Context) (active, archived []cu.StudentCourse, err error)
 	ResolveCourse(ctx context.Context, query string) (int, string, error)
 	GetCourse(ctx context.Context, courseID int) (*cu.Course, error)
 	GetCourseOverview(ctx context.Context, courseID int) (*cu.CourseOverview, error)

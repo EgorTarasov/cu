@@ -31,6 +31,21 @@ func (c *Client) GetCourseOverview(ctx context.Context, courseID int) (*CourseOv
 	return doJSON[CourseOverview](ctx, c, fmt.Sprintf(CourseOverviewEndpoint, courseID))
 }
 
+// GetAllCourses fetches both active (state=published) and archived
+// (state=archived) student courses. The first return is the active list,
+// the second is the archived list; combine if a flat list is needed.
+func (c *Client) GetAllCourses(ctx context.Context) ([]StudentCourse, []StudentCourse, error) {
+	pub, err := c.GetStudentCourses(ctx, maxCoursesLimit, "published")
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetching active courses: %w", err)
+	}
+	arc, err := c.GetStudentCourses(ctx, maxCoursesLimit, "archived")
+	if err != nil {
+		return nil, nil, fmt.Errorf("fetching archived courses: %w", err)
+	}
+	return pub.Items, arc.Items, nil
+}
+
 func (c *Client) GetCourse(ctx context.Context, courseID int) (*Course, error) {
 	return doJSON[Course](ctx, c, fmt.Sprintf(CourseEndpoint, courseID))
 }
@@ -40,15 +55,23 @@ func (c *Client) GetTheme(ctx context.Context, themeID int) (*Theme, error) {
 }
 
 // ResolveCourse finds a course by ID (numeric string) or by substring match on course name.
+// Searches both active and archived courses; for numeric IDs the archived list
+// is a fallback when the ID is not in the active set.
 // Returns the matched course ID. If multiple courses match, returns all matches and an error.
 func (c *Client) ResolveCourse(ctx context.Context, query string) (int, string, error) {
-	// Try numeric ID first.
-	if id, err := strconv.Atoi(query); err == nil {
-		courses, err := c.GetStudentCourses(ctx, maxCoursesLimit, "published")
-		if err != nil {
-			return id, "", err
+	active, archived, err := c.GetAllCourses(ctx)
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to fetch courses: %w", err)
+	}
+
+	// Try numeric ID first — check active then archived.
+	if id, idErr := strconv.Atoi(query); idErr == nil {
+		for _, course := range active {
+			if course.ID == id {
+				return id, course.Name, nil
+			}
 		}
-		for _, course := range courses.Items {
+		for _, course := range archived {
 			if course.ID == id {
 				return id, course.Name, nil
 			}
@@ -56,15 +79,9 @@ func (c *Client) ResolveCourse(ctx context.Context, query string) (int, string, 
 		return 0, "", fmt.Errorf("course with ID %d not found", id)
 	}
 
-	// Substring match on name (case-insensitive).
-	courses, err := c.GetStudentCourses(ctx, maxCoursesLimit, "published")
-	if err != nil {
-		return 0, "", fmt.Errorf("failed to fetch courses: %w", err)
-	}
-
 	queryLower := strings.ToLower(query)
 	var matches []StudentCourse
-	for _, course := range courses.Items {
+	for _, course := range append(active, archived...) {
 		if strings.Contains(strings.ToLower(course.Name), queryLower) {
 			matches = append(matches, course)
 		}

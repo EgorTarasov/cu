@@ -56,17 +56,29 @@ paths:
     get:
       tags: [courses]
       summary: List student's courses
+      description: |
+        Returns courses the student is enrolled in. Filter via `state`:
+        - `published` — currently active courses (default-ish behavior of the web UI's "Courses" page).
+        - `archived` — courses moved to the archive (web UI: `/learn/courses/view/archived`).
+          Each item still has `state: "published"`, but `isArchived: true`.
+        The two sets are disjoint and must be fetched separately if both are needed.
       parameters:
         - name: limit
           in: query
           schema:
             type: integer
             default: 10000
-        - name: state
+        - name: offset
           in: query
           schema:
+            type: integer
+            default: 0
+        - name: state
+          in: query
+          required: false
+          schema:
             type: string
-            enum: [published]
+            enum: [published, archived]
       responses:
         "200":
           description: Paginated list of courses
@@ -96,6 +108,8 @@ paths:
       description: |
         Returns full course tree: themes with longreads and exercises.
         This is the main endpoint for getting course content structure.
+        Works for both active and archived courses — the path is the same;
+        archived courses are simply marked with `isArchived: true`.
       parameters:
         - $ref: "#/components/parameters/courseId"
       responses:
