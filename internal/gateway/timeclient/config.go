@@ -18,7 +18,7 @@ const (
 	EnvBaseURL     = "CU_MM_BASE_URL"
 	EnvTeamName    = "CU_MM_TEAM"
 	EnvBotUsername = "CU_MM_BOT_USERNAME"
-	EnvToken       = "CU_MM_TOKEN" //nolint:gosec // G101: env var name, not a credential
+	EnvToken       = "CU_MM_TOKEN" // #nosec G101 -- env var name, not a credential
 )
 
 // Config groups the tunable knobs for the Mattermost gateway.
