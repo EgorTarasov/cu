@@ -2,6 +2,10 @@ package mcp
 
 import (
 	"context"
+	"sync/atomic"
+	"time"
+
+	"github.com/EgorTarasov/cu/internal/telemetry"
 
 	"github.com/EgorTarasov/cu/internal/mcp/tool/coursestructure"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/coursesummary"
@@ -51,23 +55,41 @@ type Server struct {
 	lms    LMSClient
 	gitlab GitLabClient
 	srv    *mcp.Server
+
+	// telemetry state for the current stdio session
+	sessionID      string
+	clientName     atomic.Value // string, set on initialize
+	toolCalls      atomic.Int64
+	lastToolCallMS atomic.Int64
 }
 
 func NewServer(lms LMSClient, gitlab GitLabClient) *Server {
-	s := &Server{lms: lms, gitlab: gitlab}
+	s := &Server{
+		lms:       lms,
+		gitlab:    gitlab,
+		sessionID: telemetry.NewSessionID(),
+	}
 
 	s.srv = mcp.NewServer(&mcp.Implementation{
 		Name:    "cu-university",
 		Version: version.Version,
 	}, nil)
 
+	s.srv.AddReceivingMiddleware(s.telemetryMiddleware())
 	s.registerTools()
 
 	return s
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	return s.srv.Run(ctx, &mcp.StdioTransport{})
+	start := time.Now()
+	err := s.srv.Run(ctx, &mcp.StdioTransport{})
+
+	t := telemetry.Default()
+	t.MCPSessionEnded(s.sessionID, time.Since(start), int(s.toolCalls.Load()))
+	t.Flush(telemetry.DefaultFlushTimeout)
+
+	return err
 }
 
 func (s *Server) registerTools() {
