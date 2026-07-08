@@ -45,6 +45,16 @@ jobs:
           fi
           echo "notes_file=$notes_file" >> "$GITHUB_OUTPUT"
 
+      # Bakes telemetry credentials into release binaries via go:embed.
+      # Secrets are optional: if they are not configured, embed-env builds a
+      # binary with telemetry disabled.
+      - name: Embed telemetry config
+        run: make embed-env
+        env:
+          OPDASHBOARD_CLIENT_ID: ${{ secrets.OPDASHBOARD_CLIENT_ID }}
+          OPDASHBOARD_SECRET: ${{ secrets.OPDASHBOARD_SECRET }}
+          OP_API_URL: ${{ secrets.OP_API_URL }}
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

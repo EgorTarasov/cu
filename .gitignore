@@ -34,7 +34,8 @@ dist/
 
 coverage.html
 
-# Environment files
+# Environment files (root .env is the source for `make embed-env`;
+# internal/configure/embedded/.env is generated from it at build time)
 .env
 .env.local
 

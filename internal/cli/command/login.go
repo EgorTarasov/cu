@@ -10,6 +10,7 @@ import (
 	tcli "github.com/EgorTarasov/cu/internal/gateway/timeclient"
 
 	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/telemetry"
 	"github.com/EgorTarasov/cu/internal/usecase/login"
 
 	"github.com/spf13/cobra"
@@ -56,6 +57,7 @@ Examples:
 			if err := ktalk.SaveTokens(tokens); err != nil {
 				exitErrf("Failed to save Ktalk tokens: %v", err)
 			}
+			telemetry.Default().LoginCompleted("ktalk")
 			path, _ := ktalk.TokensFilePath()
 			fmt.Printf("Ktalk tokens saved to %s\n", path)
 			fmt.Printf("  cookies: %d, localStorage: %d, sessionStorage: %d\n",
@@ -70,6 +72,7 @@ Examples:
 				exitErrf("time.cu.ru login failed: %v", err)
 			}
 
+			telemetry.Default().LoginCompleted("time")
 			path, _ := tcli.CookieFilePath()
 			fmt.Printf("time.cu.ru token saved to %s\n", path)
 			fmt.Println("You can now use 'cu time sync' to fetch posts from the notification bot.")
@@ -86,6 +89,7 @@ Examples:
 				return
 			}
 
+			telemetry.Default().LoginCompleted("gitlab")
 			path, _ := cu2.GitLabCookieFilePath()
 			fmt.Printf("GitLab cookie saved to %s\n", path)
 			fmt.Println("You can now use 'cu materials' to download longreads from git.culab.ru.")
@@ -107,6 +111,7 @@ Examples:
 				fmt.Println("Cookie validated successfully.")
 			}
 
+			telemetry.Default().LoginCompleted("lms")
 			path, _ := cu2.CookieFilePath()
 			fmt.Printf("Cookie saved to %s\n", path)
 		}

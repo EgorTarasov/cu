@@ -40,9 +40,30 @@ test-coverage: test
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
+# Generate internal/configure/embedded/.env for go:embed.
+# Sources, in priority order: ./.env file, then OPDASHBOARD_* / OP_API_URL
+# environment variables (CI). Neither present -> remove stale file and build
+# a binary with telemetry disabled (noop).
+EMBED_ENV=internal/configure/embedded/.env
+
+.PHONY: embed-env
+embed-env:
+	@mkdir -p internal/configure/embedded
+	@if [ -f .env ]; then \
+		cp .env $(EMBED_ENV); \
+		echo "embed-env: telemetry config from ./.env"; \
+	elif [ -n "$$OPDASHBOARD_CLIENT_ID" ] && [ -n "$$OPDASHBOARD_SECRET" ] && [ -n "$$OP_API_URL" ]; then \
+		printf 'OPDASHBOARD_CLIENT_ID="%s"\nOPDASHBOARD_SECRET="%s"\nOP_API_URL="%s"\n' \
+			"$$OPDASHBOARD_CLIENT_ID" "$$OPDASHBOARD_SECRET" "$$OP_API_URL" > $(EMBED_ENV); \
+		echo "embed-env: telemetry config from environment"; \
+	else \
+		rm -f $(EMBED_ENV); \
+		echo "embed-env: no telemetry config found — binary will be built with telemetry disabled"; \
+	fi
+
 # Build for current platform
 .PHONY: build
-build:
+build: embed-env
 	@mkdir -p $(BIN_DIR)
 	go build $(LDFLAGS) -o $(BIN_DIR)/$(BINARY_NAME) ./$(CMD_DIR)
 
@@ -63,7 +84,7 @@ install: build
 
 # Build for all platforms
 .PHONY: build-all
-build-all: clean
+build-all: clean embed-env
 	mkdir -p $(BUILD_DIR)
 	
 	# Linux AMD64
@@ -152,6 +173,7 @@ help:
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make build        - Build for current platform"
+	@echo "  make embed-env    - Generate embedded telemetry config from .env / env vars"
 	@echo "  make build-all    - Build for all platforms"
 	@echo "  make test         - Run tests"
 	@echo "  make test-coverage- Run tests with coverage report"

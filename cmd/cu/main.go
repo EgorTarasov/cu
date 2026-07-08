@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/EgorTarasov/cu/internal/cli/command"
+	"github.com/EgorTarasov/cu/internal/telemetry"
 	"github.com/EgorTarasov/cu/internal/version"
 )
 
@@ -17,8 +18,10 @@ var (
 func main() {
 	version.Set(ver, commit, date)
 	command.RootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", ver, commit, date)
+	telemetry.Init(ver)
 
 	if err := command.RootCmd.Execute(); err != nil {
+		command.ReportUsageError()
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
