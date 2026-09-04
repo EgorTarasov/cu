@@ -37,6 +37,7 @@ type Tracker struct {
 	sender   sender
 	deviceID string
 	version  string
+	spool    string
 	wg       sync.WaitGroup
 }
 
@@ -67,11 +68,27 @@ func Init(appVersion string) {
 	)
 	client.SetUserAgent(userAgent(appVersion))
 
+	queue, err := spoolPath()
+	if err != nil {
+		queue = ""
+	}
+
 	defaultTracker = &Tracker{
 		sender:   client,
 		deviceID: deviceID,
 		version:  appVersion,
+		spool:    queue,
 	}
+
+	// Ship whatever the previous run queued. Deliberately a bare goroutine
+	// and not async(): it must stay outside the WaitGroup so Flush returns
+	// without waiting for it, letting the send overlap with this run's real
+	// work instead of delaying the exit.
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), sendTimeout)
+		defer cancel()
+		defaultTracker.drainSpool(ctx)
+	}()
 
 	if created {
 		defaultTracker.firstRun()
@@ -150,7 +167,7 @@ func (t *Tracker) CommandExecuted(e CommandEvent) {
 	if e.ErrorKind != "" {
 		props[propErrorKind] = e.ErrorKind
 	}
-	t.track(CommandEventName(e.Command), "", props)
+	t.trackSpooled(CommandEventName(e.Command), props)
 }
 
 // LoginCompleted records a successful login; target is the auth backend:
@@ -159,7 +176,7 @@ func (t *Tracker) LoginCompleted(target string) {
 	if t == nil {
 		return
 	}
-	t.track(EventLoginCompleted, "", map[string]any{propTarget: target})
+	t.trackSpooled(EventLoginCompleted, map[string]any{propTarget: target})
 }
 
 // NewSessionID returns a random ID that groups all events of one MCP session.
@@ -260,6 +277,38 @@ func (t *Tracker) firstRun() {
 // therefore which session — the event belongs to; empty means the persistent
 // device id.
 func (t *Tracker) track(name EventName, deviceOverride string, props map[string]any) {
+	payload := t.payload(name, deviceOverride, props)
+	t.async(func(ctx context.Context) {
+		_, _ = t.sender.Track(ctx, payload)
+	})
+}
+
+// trackSpooled queues the event on disk instead of sending it now. CLI
+// commands use it because the process exits immediately afterwards: a
+// synchronous POST costs its own TLS handshake — measured at ~500ms, roughly
+// a third of a typical invocation — for data nobody is waiting on. The next
+// run ships it, concurrently with that run's work.
+func (t *Tracker) trackSpooled(name EventName, props map[string]any) {
+	payload := t.payload(name, "", props)
+	if t.spool == "" {
+		t.async(func(ctx context.Context) {
+			_, _ = t.sender.Track(ctx, payload)
+		})
+		return
+	}
+	if err := appendSpool(t.spool, payload); err != nil {
+		t.async(func(ctx context.Context) {
+			_, _ = t.sender.Track(ctx, payload)
+		})
+	}
+}
+
+// payload stamps the device/app context every event carries.
+func (t *Tracker) payload(
+	name EventName,
+	deviceOverride string,
+	props map[string]any,
+) clickstream.TrackPayload {
 	if deviceOverride == "" {
 		deviceOverride = t.deviceID
 	}
@@ -270,13 +319,11 @@ func (t *Tracker) track(name EventName, deviceOverride string, props map[string]
 	props[propAppVersion] = t.version
 	props[propOS] = runtime.GOOS
 	props[propArch] = runtime.GOARCH
-	t.async(func(ctx context.Context) {
-		_, _ = t.sender.Track(ctx, clickstream.TrackPayload{
-			Name:       string(name),
-			ProfileID:  t.deviceID,
-			Properties: props,
-		})
-	})
+	return clickstream.TrackPayload{
+		Name:       string(name),
+		ProfileID:  t.deviceID,
+		Properties: props,
+	}
 }
 
 func (t *Tracker) async(fn func(ctx context.Context)) {
