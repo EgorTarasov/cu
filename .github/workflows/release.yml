@@ -3,6 +3,16 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Called by release-tag.yml. A tag pushed by that workflow with the default
+  # GITHUB_TOKEN does NOT raise a push event, so the trigger above never fires
+  # for auto-created tags — calling this workflow directly is what closes that
+  # gap without needing a PAT.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag to release, e.g. v0.1.9"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,6 +26,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Go
@@ -34,8 +45,10 @@ jobs:
 
       - name: Extract release notes from CHANGELOG.md
         id: notes
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF#refs/tags/v}"
+          version="${RELEASE_TAG#v}"
           notes_file="/tmp/release-notes.md"
           chmod +x scripts/extract-changelog.sh
           scripts/extract-changelog.sh "$version" > "$notes_file"
@@ -79,14 +92,18 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rotate [Unreleased] -> [version]
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF#refs/tags/v}"
+          version="${RELEASE_TAG#v}"
           chmod +x scripts/rotate-changelog.sh
           scripts/rotate-changelog.sh "$version"
 
       - name: Commit rotation
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF#refs/tags/v}"
+          version="${RELEASE_TAG#v}"
           if git diff --quiet CHANGELOG.md; then
             echo "No changelog changes to commit."
             exit 0
