@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -17,8 +18,19 @@ import (
 
 const cookieName = "bff.cookie"
 
+// stdinFd returns os.Stdin's descriptor as an int. The bounds check makes the
+// uintptr -> int conversion provably safe for gosec G115; a descriptor that
+// cannot fit is reported as -1, which every caller treats as "not a terminal".
+func stdinFd() int {
+	fd := os.Stdin.Fd()
+	if fd > uintptr(math.MaxInt) {
+		return -1
+	}
+	return int(fd)
+}
+
 func isInteractive() bool {
-	return term.IsTerminal(int(os.Stdin.Fd()))
+	return term.IsTerminal(stdinFd())
 }
 
 // resolveLoginMethod applies explicit flags first, then the saved preference,
@@ -111,7 +123,7 @@ func printManualInstructions() {
 // session value does not linger in scrollback.
 func readCookieFromTerminal() (string, error) {
 	fmt.Print("Вставьте значение bff.cookie (ввод скрыт): ")
-	raw, err := term.ReadPassword(int(os.Stdin.Fd()))
+	raw, err := term.ReadPassword(stdinFd())
 	fmt.Println()
 	if err != nil {
 		return "", fmt.Errorf("не удалось прочитать ввод: %w", err)
