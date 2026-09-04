@@ -1,15 +1,15 @@
 version: 2
 
-project_name: cu
+project_name: cuni
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: cu
-    main: ./cmd/cu
-    binary: cu
+  - id: cuni
+    main: ./cmd/cuni
+    binary: cuni
     env:
       - CGO_ENABLED=0
     flags:
@@ -31,7 +31,7 @@ builds:
         goarch: arm64
 
 archives:
-  - id: cu
+  - id: cuni
     formats: [tar.gz]
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:

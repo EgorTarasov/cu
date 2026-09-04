@@ -31,21 +31,21 @@ jobs:
         run: go mod download
 
       - name: Build CLI
-        run: go build -o cu cmd/cu/main.go
+        run: go build -o cuni cmd/cuni/main.go
 
       - name: Test - Fetch course overview
         env:
           CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
         run: |
           echo "Testing course fetch without dump..."
-          ./cu fetch course 526
+          ./cuni fetch course 526
 
       - name: Test - Dump course materials
         env:
           CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
         run: |
           echo "Testing course dump..."
-          ./cu fetch course 526 --dump --path ./test-downloads
+          ./cuni fetch course 526 --dump --path ./test-downloads
 
       - name: Verify downloaded files
         run: |
@@ -76,7 +76,7 @@ jobs:
           CU_BFF_COOKIE: ${{ secrets.CU_BFF_COOKIE }}
         run: |
           echo "Testing student courses fetch..."
-          ./cu fetch courses
+          ./cuni fetch courses
 
       - name: Upload download artifacts
         if: always()

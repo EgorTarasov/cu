@@ -10,6 +10,8 @@ import (
 
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
+
+	"github.com/EgorTarasov/cu/internal/browser"
 )
 
 const tickerInterval = 500 * time.Millisecond
@@ -28,12 +30,7 @@ func capture(
 	startURL, hostSuffix string,
 	required []string,
 ) (Tokens, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("disable-gpu", false),
-	)
-
-	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
+	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, browser.AllocatorOptions()...)
 	defer allocCancel()
 
 	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)

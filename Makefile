@@ -2,10 +2,10 @@
 # Makefile for local development
 
 # Variables
-BINARY_NAME=cu
+BINARY_NAME=cuni
 BIN_DIR=bin
 BUILD_DIR=build
-CMD_DIR=cmd/cu
+CMD_DIR=cmd/cuni
 INSTALL_DIR?=$(shell go env GOPATH)/bin
 VERSION?=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT?=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -33,6 +33,12 @@ deps:
 .PHONY: test
 test:
 	go test -v -race -coverprofile=coverage.out ./...
+
+# End-to-end test for install.sh: builds a release archive, serves it over
+# localhost and drives the real installer. No network, no published release.
+.PHONY: test-install
+test-install:
+	./test/e2e/install_test.sh
 
 # Run tests with coverage report
 .PHONY: test-coverage
@@ -80,7 +86,7 @@ install: build
 	fi
 	@echo "Installed $(INSTALL_DIR)/$(BINARY_NAME)"
 	@echo "If Claude Code (or another host) has the MCP server running, restart it:"
-	@echo "  claude mcp restart cu"
+	@echo "  claude mcp restart cuni"
 
 # Build for all platforms
 .PHONY: build-all
@@ -169,13 +175,14 @@ run-help: build
 # Show help
 .PHONY: help
 help:
-	@echo "CU - Central University CLI Tool"
+	@echo "cuni - Central University CLI Tool"
 	@echo ""
 	@echo "Available commands:"
 	@echo "  make build        - Build for current platform"
 	@echo "  make embed-env    - Generate embedded telemetry config from .env / env vars"
 	@echo "  make build-all    - Build for all platforms"
 	@echo "  make test         - Run tests"
+	@echo "  make test-install - E2E test for install.sh (macOS/Linux)"
 	@echo "  make test-coverage- Run tests with coverage report"
 	@echo "  make clean        - Clean build directory"
 	@echo "  make deps         - Download dependencies"

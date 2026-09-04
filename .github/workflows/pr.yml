@@ -47,15 +47,15 @@ jobs:
 
       - name: Build for multiple platforms
         run: |
-          GOOS=linux GOARCH=amd64 go build -o /tmp/cu-linux ./cmd/cu
-          GOOS=darwin GOARCH=amd64 go build -o /tmp/cu-darwin ./cmd/cu
-          GOOS=windows GOARCH=amd64 go build -o /tmp/cu-windows.exe ./cmd/cu
+          GOOS=linux GOARCH=amd64 go build -o /tmp/cuni-linux ./cmd/cuni
+          GOOS=darwin GOARCH=amd64 go build -o /tmp/cuni-darwin ./cmd/cuni
+          GOOS=windows GOARCH=amd64 go build -o /tmp/cuni-windows.exe ./cmd/cuni
 
       - name: Test CLI functionality
         run: |
-          go build -o cu ./cmd/cu
-          ./cu --help
-          ./cu fetch --help
+          go build -o cuni ./cmd/cuni
+          ./cuni --help
+          ./cuni fetch --help
 
   security:
     name: Security Scan

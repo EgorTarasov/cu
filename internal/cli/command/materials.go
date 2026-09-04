@@ -25,10 +25,10 @@ var materialsCmd = &cobra.Command{
 Course can be specified by ID or by name (substring match).
 
 Examples:
-  cu materials go                 # download all Go course materials
-  cu materials алго --week 8      # only week 8
-  cu materials go --links         # just show links, no download
-  cu materials 901 --path ./docs  # save to ./docs`,
+  cuni materials go                 # download all Go course materials
+  cuni materials алго --week 8      # only week 8
+  cuni materials go --links         # just show links, no download
+  cuni materials 901 --path ./docs  # save to ./docs`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -43,7 +43,7 @@ Examples:
 		gitlabClient, gitlabErr := cu.NewGitLabClientFromEnv()
 		if gitlabErr != nil && !linksOnly {
 			fmt.Println("GitLab not configured — git.culab.ru links will be shown but not downloaded.")
-			fmt.Println("Run 'cu login --gitlab' to enable.")
+			fmt.Println("Run 'cuni login --gitlab' to enable.")
 			fmt.Println()
 		}
 		if gitlabClient != nil {

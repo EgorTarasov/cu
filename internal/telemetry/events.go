@@ -9,7 +9,7 @@ type EventName string
 const (
 	// EventFirstRun fires once per device, when the device-id file is created.
 	EventFirstRun EventName = "first_run"
-	// EventLoginCompleted fires after a successful `cu login` of any kind.
+	// EventLoginCompleted fires after a successful `cuni login` of any kind.
 	EventLoginCompleted EventName = "login_completed"
 	// EventMCPSessionStarted fires when an MCP host initializes a session.
 	EventMCPSessionStarted EventName = "mcp_session_started"
@@ -38,10 +38,12 @@ func (n EventName) path() string {
 	}
 }
 
-// CommandEventName maps a cobra command path ("cu fetch theme") onto a typed
+// CommandEventName maps a cobra command path ("cuni fetch theme") onto a typed
 // event name ("command_fetch_theme").
 func CommandEventName(commandPath string) EventName {
-	slug := strings.TrimPrefix(commandPath, "cu")
+	// Drop the binary name, whatever it is, so renaming the CLI cannot
+	// silently change event names.
+	_, slug, _ := strings.Cut(commandPath, " ")
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
 		slug = "root"

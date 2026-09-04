@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "cuni CLI — LMS Auth Cookie Lifecycle",
+    "output": "auth-cookie-lifecycle.html",
+    "locale": "en",
+    "viewBox": [
+      820,
+      640
+    ],
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Browser login path",
+        "focus": [
+          "unauthenticated",
+          "browserLogin",
+          "awaitingCookie",
+          "cookieSaved",
+          "authenticated"
+        ],
+        "note": "Follow cuni login from an empty keyring to a validated session."
+      },
+      {
+        "id": "validation",
+        "label": "Cookie validation",
+        "focus": [
+          "cookieSaved",
+          "validateCookie",
+          "authenticated",
+          "cookieExpired"
+        ],
+        "note": "Every command validates the cookie against /api/account/me before use."
+      },
+      {
+        "id": "failures",
+        "label": "Failure and bypass",
+        "focus": [
+          "loginTimeout",
+          "cookieExpired",
+          "envOverride",
+          "browserLogin"
+        ],
+        "note": "Recoverable capture failure, expiry loop back, and the manual env override."
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Session phases"
+    },
+    {
+      "id": "checks",
+      "label": "Checks"
+    },
+    {
+      "id": "terminal",
+      "label": "Exits and overrides"
+    }
+  ],
+  "states": [
+    {
+      "id": "unauthenticated",
+      "type": "start",
+      "label": "Unauthenticated",
+      "sublabel": "no bff.cookie found",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "entry"
+    },
+    {
+      "id": "browserLogin",
+      "type": "active",
+      "label": "Browser Login",
+      "sublabel": "chromedp opens Chrome",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "cuni login"
+    },
+    {
+      "id": "awaitingCookie",
+      "type": "waiting",
+      "label": "Awaiting Cookie",
+      "sublabel": "500ms poll, 5m budget",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "keycloak"
+    },
+    {
+      "id": "cookieSaved",
+      "type": "active",
+      "label": "Cookie Saved",
+      "sublabel": "~/.cu-cli/cookie mode 0600",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "on disk"
+    },
+    {
+      "id": "authenticated",
+      "type": "success",
+      "label": "Authenticated",
+      "sublabel": "client carries bff.cookie",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "ready"
+    },
+    {
+      "id": "loginTimeout",
+      "type": "failure",
+      "label": "Capture Failed",
+      "sublabel": "deadline or window closed",
+      "lane": "checks",
+      "col": 0,
+      "tag": "retryable"
+    },
+    {
+      "id": "validateCookie",
+      "type": "decision",
+      "label": "Validate Cookie",
+      "sublabel": "GET /api/account/me",
+      "lane": "checks",
+      "col": 1,
+      "tag": "mustClient"
+    },
+    {
+      "id": "cookieExpired",
+      "type": "failure",
+      "label": "Cookie Expired",
+      "sublabel": "401 or 403 from LMS",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "exit 1"
+    },
+    {
+      "id": "envOverride",
+      "type": "external",
+      "label": "CU_BFF_COOKIE",
+      "sublabel": "env value, never persisted",
+      "lane": "terminal",
+      "col": 1,
+      "tag": "manual"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-login",
+      "from": "unauthenticated",
+      "to": "browserLogin",
+      "label": "cuni login",
+      "labelDy": -34
+    },
+    {
+      "id": "t-navigate",
+      "from": "browserLogin",
+      "to": "awaitingCookie",
+      "label": "navigate to LMS sign-in",
+      "labelDy": -34
+    },
+    {
+      "id": "t-capture",
+      "from": "awaitingCookie",
+      "to": "cookieSaved",
+      "label": "bff.cookie captured",
+      "labelDy": -34
+    },
+    {
+      "id": "t-validate",
+      "from": "cookieSaved",
+      "to": "validateCookie",
+      "label": "validate before use",
+      "labelDy": 24
+    },
+    {
+      "id": "t-ok",
+      "from": "validateCookie",
+      "to": "authenticated",
+      "label": "2xx accepted"
+    },
+    {
+      "id": "t-reject",
+      "from": "validateCookie",
+      "to": "cookieExpired",
+      "label": "401 / 403",
+      "variant": "security"
+    },
+    {
+      "id": "t-timeout",
+      "from": "awaitingCookie",
+      "to": "loginTimeout",
+      "label": "no cookie within timeout",
+      "variant": "security",
+      "labelDy": 24
+    },
+    {
+      "id": "t-retry",
+      "from": "loginTimeout",
+      "to": "browserLogin",
+      "label": "rerun cuni login",
+      "variant": "emphasis",
+      "toSide": "bottom"
+    },
+    {
+      "id": "t-reauth",
+      "from": "cookieExpired",
+      "to": "unauthenticated",
+      "label": "stored cookie discarded",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "bottom",
+      "via": [
+        [
+          710,
+          560
+        ],
+        [
+          94,
+          560
+        ]
+      ]
+    },
+    {
+      "id": "t-env",
+      "from": "envOverride",
+      "to": "validateCookie",
+      "label": "takes priority over saved file",
+      "variant": "dashed",
+      "labelDx": -14
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Capture path",
+      "items": [
+        "cuni login drives a visible Chrome window through Keycloak SSO",
+        "A 500ms ticker polls browser cookies until bff.cookie appears",
+        "SaveCookie writes ~/.cu-cli/cookie with 0600 under a 0700 directory"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Validation gate",
+      "items": [
+        "mustClient revalidates on every authenticated command",
+        "ValidateCookie issues GET /api/account/me and inspects the status",
+        "Only 401 and 403 are treated as an invalid or expired cookie"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Failure and override",
+      "items": [
+        "A closed window or expired 5m budget fails capture without saving",
+        "Expiry sends the user back to cuni login and exits with code 1",
+        "CU_BFF_COOKIE bypasses the file but still passes the same gate"
+      ]
+    }
+  ]
+}

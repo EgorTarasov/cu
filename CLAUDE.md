@@ -6,8 +6,8 @@
 
 ## О проекте
 
-`cu` (модуль `github.com/EgorTarasov/cu`) — CLI и MCP-сервер для LMS
-Центрального Университета. `cu` умеет:
+`cuni` (модуль `github.com/EgorTarasov/cu`) — CLI и MCP-сервер для LMS
+Центрального Университета. `cuni` умеет:
 - авторизоваться через браузер и хранить cookie,
 - ходить в публичный HTTP API LMS (`https://my.centraluniversity.ru/api/...`),
 - отдавать те же данные хостам через MCP (Claude Code, IDE).
@@ -20,7 +20,7 @@ v2.7.2 (конфиг в `.golangci.yml`). Сборка/линт/тесты — �
 Слои (от внешнего к внутреннему):
 
 ```
-cmd/cu/main.go               — точка входа, ставит version, вызывает RootCmd
+cmd/cuni/main.go             — точка входа, ставит version, вызывает RootCmd
 internal/cli/command/         — cobra-команды CLI
 internal/mcp/                 — MCP-сервер и тулы
   ├── server.go               — регистрирует все тулы, держит интерфейс LMSClient
@@ -175,7 +175,7 @@ runtime, а сами ошибки печатает `main`.
 
 ### Версия
 
-`cu --version` и `cu version` — оба работают. `Version` поле проставляется в
+`cuni --version` и `cuni version` — оба работают. `Version` поле проставляется в
 `main.go` после `version.Set(...)`. Не дублируйте инициализацию в `root.go`.
 
 ### Структура команды
@@ -226,15 +226,15 @@ var fetchThemeCmd = &cobra.Command{
 
 2. **CLI с реальным cookie:**
    ```bash
-   ./bin/cu <new-command> <args>
+   ./bin/cuni <new-command> <args>
    ```
    Проверяйте golden path и edge-cases (несуществующий ID, пустой ответ).
    Ошибки должны идти в stderr и давать `echo $?` равный 1.
 
 3. **MCP через JSON-RPC stdio** (если добавили/изменили тул):
    ```bash
-   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | ./bin/cu mcp
-   echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"<tool>","arguments":{...}}}' | ./bin/cu mcp
+   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | ./bin/cuni mcp
+   echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"<tool>","arguments":{...}}}' | ./bin/cuni mcp
    ```
    Убедитесь, что:
    - тул есть в `tools/list`, нет дубликатов,
@@ -242,10 +242,10 @@ var fetchThemeCmd = &cobra.Command{
      `list_deadlines`, `search_courses`).
 
 4. **Перезапуск MCP в хосте.** `go install` / `make install` молча НЕ обновит
-   `~/go/bin/cu`, пока хост (Claude Code/IDE) держит старый процесс. После
+   `~/go/bin/cuni`, пока хост (Claude Code/IDE) держит старый процесс. После
    установки:
    ```bash
-   claude mcp restart cu      # или /mcp reconnect в Claude Code
+   claude mcp restart cuni      # или /mcp reconnect в Claude Code
    ```
    `make install` в этом репо делает `cp + codesign` вручную как раз ради
    этого случая — не возвращайтесь к `go install`.
@@ -266,7 +266,7 @@ cookie). Если автоматизируете — выносите за `// +
 
 ### Что нельзя коммитить
 
-- **Бинари** (`cu`, `bin/`, `build/`). `.gitignore` это закрывает; если бинарь
+- **Бинари** (`cuni`, `bin/`, `build/`). `.gitignore` это закрывает; если бинарь
   всё-таки попал — удаляйте его в той же ветке через rebase/squash, **до**
   мержа в `main`. Blob 15 MB остаётся в истории навсегда. Реальный случай:
   ee3530f → пришлось делать `git reset --soft main` + force-push.
@@ -383,7 +383,7 @@ curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
    LLM-у в markdown.
 9. **README.md** — короткое упоминание новой CLI-команды (если она для
    пользователя).
-10. **Локально:** `make lint && go test ./... && make build && ./bin/cu ...`
+10. **Локально:** `make lint && go test ./... && make build && ./bin/cuni ...`
     + ручной MCP smoke-test.
 
 Если хотя бы один пункт пропущен — поймает либо ревью, либо линтер.
