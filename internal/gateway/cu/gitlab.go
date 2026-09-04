@@ -36,7 +36,7 @@ func NewGitLabClientFromEnv() (*GitLabClient, error) {
 	if cookie == "" {
 		saved, err := LoadGitLabCookie()
 		if err != nil || saved == "" {
-			return nil, errors.New("no GitLab cookie found. Run: cu login --gitlab")
+			return nil, errors.New("no GitLab cookie found. Run: cuni login --gitlab")
 		}
 		cookie = saved
 	}

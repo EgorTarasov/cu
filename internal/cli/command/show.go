@@ -195,7 +195,7 @@ func renderCourseTree(
 			}
 		}
 		if len(recs) > maxRecs {
-			fmt.Printf("  … +%d more (use 'cu time recordings %s')\n", len(recs)-maxRecs, courseShortName(c.Name))
+			fmt.Printf("  … +%d more (use 'cuni time recordings %s')\n", len(recs)-maxRecs, courseShortName(c.Name))
 		}
 	}
 

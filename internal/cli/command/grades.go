@@ -24,9 +24,9 @@ var gradesCmd = &cobra.Command{
 Course can be specified by ID or by name (substring match).
 
 Examples:
-  cu grades                 # summary across all courses
-  cu grades go              # detailed grades for the Go course
-  cu grades 901             # detailed grades for course 901`,
+  cuni grades                 # summary across all courses
+  cuni grades go              # detailed grades for the Go course
+  cuni grades 901             # detailed grades for course 901`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -68,7 +68,7 @@ func printSummary(result *model.GradesSummaryOutput) {
 			item.MaxScore,
 		)
 	}
-	fmt.Println("\nUse: cu grades <course> for detailed view")
+	fmt.Println("\nUse: cuni grades <course> for detailed view")
 }
 
 func printDetailed(result *model.GradesDetailedOutput) {

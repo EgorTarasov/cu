@@ -53,7 +53,7 @@ func NewClientFromEnv() (*Client, error) {
 		token = saved
 	}
 	if token == "" {
-		return nil, errors.New("no Mattermost auth found. Run 'cu login --mattermost' or set CU_MM_TOKEN")
+		return nil, errors.New("no Mattermost auth found. Run 'cuni login --mattermost' or set CU_MM_TOKEN")
 	}
 	return NewClientWithBase(token, cfg.BaseURL), nil
 }

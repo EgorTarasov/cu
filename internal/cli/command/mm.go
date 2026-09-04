@@ -173,7 +173,7 @@ var mmPostsCmd = &cobra.Command{
 			exitErrf("Failed to read posts: %v", err)
 		}
 		if len(posts) == 0 {
-			fmt.Println("No posts in local storage. Run 'cu time sync' first.")
+			fmt.Println("No posts in local storage. Run 'cuni time sync' first.")
 			return
 		}
 		for _, p := range posts {

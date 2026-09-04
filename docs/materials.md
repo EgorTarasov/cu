@@ -1,11 +1,11 @@
-# cu materials
+# cuni materials
 
 Скачивает PDF-файлы курса и показывает ссылки на внешние ресурсы (GitLab, Notion).
 
 ## Использование
 
 ```bash
-cu materials <course> [flags]
+cuni materials <course> [flags]
 ```
 
 ## Флаги
@@ -21,7 +21,7 @@ cu materials <course> [flags]
 ### Скачать все материалы
 
 ```
-$ cu materials алгоритмы --path ./downloads
+$ cuni materials алгоритмы --path ./downloads
 Materials: Алгоритмы и структуры данных. Часть 2
 
 [Неделя 1: Основы теории графов]
@@ -39,7 +39,7 @@ Downloaded 32/32 files
 ### Только посмотреть, что есть
 
 ```
-$ cu materials java --links
+$ cuni materials java --links
 Materials: Java Spring (...)
 
 [Неделя 1: Экосистема Spring]
@@ -51,7 +51,7 @@ Materials: Java Spring (...)
 ### Скачать только одну неделю
 
 ```
-$ cu materials go --week 8
+$ cuni materials go --week 8
 Materials: Разработка на языке программирования Go
 
 [Неделя 8: Контексты. Часть 2]

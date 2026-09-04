@@ -34,8 +34,8 @@ var coursesCmd = &cobra.Command{
 			}
 		}
 		fmt.Println("\nUse course ID or name with other commands:")
-		fmt.Println("  cu deadlines go")
-		fmt.Println("  cu grades алгоритмы")
-		fmt.Println("  cu materials 901")
+		fmt.Println("  cuni deadlines go")
+		fmt.Println("  cuni grades алгоритмы")
+		fmt.Println("  cuni materials 901")
 	},
 }

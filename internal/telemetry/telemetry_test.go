@@ -63,7 +63,7 @@ func (s *TrackerSuite) flushed() []clickstream.TrackPayload {
 
 func (s *TrackerSuite) TestCommandExecuted() {
 	s.tracker.CommandExecuted(CommandEvent{
-		Command:  "cu fetch theme",
+		Command:  "cuni fetch theme",
 		Flags:    []string{"limit"},
 		Duration: 1500 * time.Millisecond,
 		Success:  true,
@@ -78,7 +78,7 @@ func (s *TrackerSuite) TestCommandExecuted() {
 	s.Equal("/command/fetch_theme", e.Properties["__path"])
 	s.Equal("cu-cli", e.Properties["__browser"])
 	s.Equal("v0.0.1", e.Properties["__browserVersion"])
-	s.Equal("cu fetch theme", e.Properties["command"])
+	s.Equal("cuni fetch theme", e.Properties["command"])
 	s.Equal([]string{"limit"}, e.Properties["flags"])
 	s.Equal(int64(1500), e.Properties["duration_ms"])
 	s.Equal(true, e.Properties["success"])
@@ -90,7 +90,7 @@ func (s *TrackerSuite) TestCommandExecuted() {
 
 func (s *TrackerSuite) TestCommandExecuted_Failure() {
 	s.tracker.CommandExecuted(CommandEvent{
-		Command:   "cu grades",
+		Command:   "cuni grades",
 		Success:   false,
 		ErrorKind: "auth",
 	})
@@ -168,7 +168,7 @@ func (s *TrackerSuite) TestFirstRun_IdentifiesDevice() {
 
 func (s *TrackerSuite) TestNilTrackerIsNoop() {
 	var t *Tracker
-	t.CommandExecuted(CommandEvent{Command: "cu version"})
+	t.CommandExecuted(CommandEvent{Command: "cuni version"})
 	t.LoginCompleted("lms")
 	t.MCPSessionStarted("s", "x", "y")
 	t.MCPToolCalled(ToolCallEvent{Tool: "x"})
@@ -191,13 +191,13 @@ func (s *TrackerSuite) TestDeviceID_CreateThenLoad() {
 }
 
 func (s *TrackerSuite) TestEventNames() {
-	s.Equal(EventName("command_fetch_theme"), CommandEventName("cu fetch theme"))
-	s.Equal(EventName("command_version"), CommandEventName("cu version"))
+	s.Equal(EventName("command_fetch_theme"), CommandEventName("cuni fetch theme"))
+	s.Equal(EventName("command_version"), CommandEventName("cuni version"))
 	s.Equal(EventName("command_root"), CommandEventName("cu"))
 	s.Equal(EventName("tool_list_courses"), ToolCallEventName("list_courses"))
 
 	s.Equal("/tool/list_courses", ToolCallEventName("list_courses").path())
-	s.Equal("/command/version", CommandEventName("cu version").path())
+	s.Equal("/command/version", CommandEventName("cuni version").path())
 	s.Equal("/first_run", EventFirstRun.path())
 }
 

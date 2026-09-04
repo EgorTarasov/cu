@@ -124,7 +124,7 @@ func FromContext(ctx context.Context) *Tracker {
 
 // CommandEvent describes one finished CLI command invocation.
 type CommandEvent struct {
-	Command   string        // full cobra path, e.g. "cu fetch theme"
+	Command   string        // full cobra path, e.g. "cuni fetch theme"
 	Flags     []string      // names of flags explicitly set, no values
 	Duration  time.Duration //
 	Success   bool          //

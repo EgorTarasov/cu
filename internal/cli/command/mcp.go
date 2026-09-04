@@ -13,13 +13,13 @@ import (
 var mcpCmd = &cobra.Command{
 	Use:   "mcp",
 	Short: "Start MCP server (stdio transport)",
-	Long: `Start a Model Context Protocol server that exposes CU tools for LLM clients.
+	Long: `Start a Model Context Protocol server that exposes Central University tools for LLM clients.
 
 The server communicates over stdin/stdout using JSON-RPC.
 Configure it in your MCP client (e.g. Claude Code) as:
   {
     "mcpServers": {
-      "cu": { "command": "cu", "args": ["mcp"] }
+      "cuni": { "command": "cuni", "args": ["mcp"] }
     }
   }`,
 	Run: func(cmd *cobra.Command, _ []string) {

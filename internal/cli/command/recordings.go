@@ -28,9 +28,9 @@ var mmRecordingsCmd = &cobra.Command{
 recordings and lets you pick one interactively.
 
 Examples:
-  cu time recordings              # interactive over everything
-  cu time recordings go           # filter by subject substring
-  cu time recordings --all go     # print every match, no picker`,
+  cuni time recordings              # interactive over everything
+  cuni time recordings go           # filter by subject substring
+  cuni time recordings --all go     # print every match, no picker`,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -56,7 +56,7 @@ Examples:
 			exitErrf("Search failed: %v", err)
 		}
 		if len(matches) == 0 {
-			fmt.Println("No recordings matched. Try 'cu time sync' first.")
+			fmt.Println("No recordings matched. Try 'cuni time sync' first.")
 			return
 		}
 		if recordingsLimit > 0 && len(matches) > recordingsLimit {

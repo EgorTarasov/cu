@@ -1,20 +1,20 @@
-# cu grades
+# cuni grades
 
 Показывает оценки: сводку по всем курсам или подробную ведомость по конкретному.
 
 ## Использование
 
 ```bash
-cu grades                 # сводка по всем курсам
-cu grades go              # ведомость курса Go
-cu grades 901             # по ID
-cu grades алгоритмы       # по названию
+cuni grades                 # сводка по всем курсам
+cuni grades go              # ведомость курса Go
+cuni grades 901             # по ID
+cuni grades алгоритмы       # по названию
 ```
 
 ## Пример — сводка
 
 ```
-$ cu grades
+$ cuni grades
 Grades summary
 
   Java Spring (Разработка веб-приложений на Java с …  [#######-------------] 3.6/10
@@ -22,13 +22,13 @@ Grades summary
   Алгоритмы и структуры данных. Часть 2               [####----------------] 2.0/10
   Разработка на языке программирования Go             [##------------------] 1.1/10
 
-Use: cu grades <course> for detailed view
+Use: cuni grades <course> for detailed view
 ```
 
 ## Пример — подробная ведомость
 
 ```
-$ cu grades алгоритмы
+$ cuni grades алгоритмы
 Grades: Алгоритмы и структуры данных. Часть 2
 
 Activity breakdown:

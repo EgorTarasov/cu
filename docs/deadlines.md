@@ -1,20 +1,20 @@
-# cu deadlines
+# cuni deadlines
 
 Показывает ближайшие дедлайны по всем курсам или по конкретному.
 
 ## Использование
 
 ```bash
-cu deadlines              # все дедлайны
-cu deadlines go           # по курсу Go
-cu deadlines 901          # по ID курса
-cu deadlines алгоритмы    # по названию
+cuni deadlines              # все дедлайны
+cuni deadlines go           # по курсу Go
+cuni deadlines 901          # по ID курса
+cuni deadlines алгоритмы    # по названию
 ```
 
 ## Пример — все дедлайны
 
 ```
-$ cu deadlines
+$ cuni deadlines
 All upcoming deadlines
 
  ! TODO          3h 47m    21 Apr 20:59  ДЗ 5. Неделя 9. «Kubernetes 1»
@@ -34,7 +34,7 @@ All upcoming deadlines
 ## Пример — по курсу
 
 ```
-$ cu deadlines sql
+$ cuni deadlines sql
 Deadlines: SQL и базы данных (для разработчиков)
 
  * IN PROGRESS   1d 3h     22 Apr 20:59  ДЗ 5. Неделя 10.

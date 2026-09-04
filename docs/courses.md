@@ -1,17 +1,17 @@
-# cu courses
+# cuni courses
 
 Показывает список всех ваших актуальных курсов с ID.
 
 ## Использование
 
 ```bash
-cu courses
+cuni courses
 ```
 
 ## Пример
 
 ```
-$ cu courses
+$ cuni courses
 Your courses (8)
 
   1. [947] Java Spring (Разработка веб-приложений на Java с использованием Spring)
@@ -24,9 +24,9 @@ Your courses (8)
   8. [900] Разработка на языке программирования Go
 
 Use course ID or name with other commands:
-  cu deadlines go
-  cu grades алгоритмы
-  cu materials 901
+  cuni deadlines go
+  cuni grades алгоритмы
+  cuni materials 901
 ```
 
 ## Поиск курса по имени

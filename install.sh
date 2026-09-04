@@ -1,13 +1,17 @@
 #!/bin/sh
-# Install the `cu` CLI from the latest GitHub Release.
+# Install the `cuni` CLI from the latest GitHub Release.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/EgorTarasov/cu/main/install.sh | sh
 #
 # Honored environment variables:
-#   CU_VERSION       — install a specific tag (e.g. v0.1.5). Default: latest.
-#   CU_INSTALL_DIR   — install path. Default: ~/.local/bin.
-#                      Pass /usr/local/bin to install system-wide (will sudo).
+#   CU_VERSION            — install a specific tag (e.g. v0.1.5). Default: latest.
+#   CU_INSTALL_DIR        — install path. Default: ~/.local/bin.
+#                           Pass /usr/local/bin to install system-wide (will sudo).
+#   CU_NO_MODIFY_PATH     — set to 1 to skip editing the shell rc file.
+#                           The PATH line is printed instead.
+#   CU_DOWNLOAD_BASE_URL  — override where the archive is fetched from.
+#                           Used by the installer e2e test; not needed normally.
 #
 # Supported platforms: macOS (Intel/Apple Silicon), Linux x86_64/arm64
 # (tested on Ubuntu, Fedora — any glibc Linux works).
@@ -15,7 +19,7 @@
 set -eu
 
 REPO="EgorTarasov/cu"
-BIN_NAME="cu"
+BIN_NAME="cuni"
 DEFAULT_DIR="$HOME/.local/bin"
 INSTALL_DIR="${CU_INSTALL_DIR:-$DEFAULT_DIR}"
 
@@ -61,7 +65,7 @@ fi
 case "$VERSION" in v*) ;; *) VERSION="v${VERSION}" ;; esac
 
 archive="${BIN_NAME}_${os}_${arch}.tar.gz"
-base_url="https://github.com/${REPO}/releases/download/${VERSION}"
+base_url="${CU_DOWNLOAD_BASE_URL:-https://github.com/${REPO}/releases/download/${VERSION}}"
 
 # --- Download + verify + extract in a tmpdir ---
 tmpdir="$(mktemp -d)"
@@ -128,17 +132,97 @@ installed_version="$("${INSTALL_DIR}/${BIN_NAME}" --version 2>/dev/null | head -
 info "Installed: ${INSTALL_DIR}/${BIN_NAME}"
 [ -n "$installed_version" ] && info "Version:   ${installed_version}"
 
-# PATH hint
+# --- PATH setup ---
+# A one-line install has to leave a working command behind, so by default we
+# write the PATH line into the login shell's rc file. Set CU_NO_MODIFY_PATH=1
+# to opt out and get printed instructions instead.
+PATH_MARKER="# added by ${BIN_NAME} installer"
+
+shell_name() {
+    if [ -n "${SHELL:-}" ]; then
+        basename "$SHELL"
+    else
+        echo "sh"
+    fi
+}
+
+rc_file() {
+    case "$(shell_name)" in
+        zsh)  printf '%s\n' "${ZDOTDIR:-$HOME}/.zshrc" ;;
+        bash)
+            # macOS terminals start bash as a login shell, which reads
+            # .bash_profile and never .bashrc.
+            if [ "$os" = "Darwin" ]; then
+                printf '%s\n' "$HOME/.bash_profile"
+            else
+                printf '%s\n' "$HOME/.bashrc"
+            fi
+            ;;
+        fish) printf '%s\n' "$HOME/.config/fish/config.fish" ;;
+        *)    printf '%s\n' "$HOME/.profile" ;;
+    esac
+}
+
+path_line() {
+    case "$(shell_name)" in
+        # fish_add_path prepends and is already idempotent.
+        fish) printf 'fish_add_path %s\n' "$1" ;;
+        *)    printf 'export PATH="%s:$PATH"\n' "$1" ;;
+    esac
+}
+
+RELOAD_FILE=""
+
+configure_path() {
+    rc="$(rc_file)"
+
+    if [ -f "$rc" ] && grep -Fq "$PATH_MARKER" "$rc" 2>/dev/null; then
+        info "PATH already configured in ${rc}"
+        RELOAD_FILE="$rc"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$rc")" 2>/dev/null || true
+    if ! { printf '\n%s\n' "$PATH_MARKER"; path_line "$INSTALL_DIR"; } >> "$rc" 2>/dev/null; then
+        printf '\n\033[33mNote:\033[0m could not write to %s. Add this yourself:\n\n' "$rc"
+        printf '    %s\n\n' "$(path_line "$INSTALL_DIR")"
+        return 0
+    fi
+
+    info "PATH updated in ${rc}"
+    RELOAD_FILE="$rc"
+}
+
+# Needed when the dir is absent from PATH, or present but losing to another
+# binary of the same name earlier in the search order.
+needs_path=0
 case ":${PATH}:" in
     *":${INSTALL_DIR}:"*) ;;
-    *)
-        printf '\n'
-        printf '\033[33mNote:\033[0m %s is not in your PATH.\n' "$INSTALL_DIR"
-        printf 'Add this to ~/.bashrc, ~/.zshrc, etc.:\n\n'
-        printf '    export PATH="$PATH:%s"\n\n' "$INSTALL_DIR"
-        ;;
+    *) needs_path=1 ;;
 esac
 
-printf 'Next steps:\n'
-printf '  cu login           # authenticate via browser\n'
-printf '  cu --help          # see all commands\n'
+resolved="$(command -v "$BIN_NAME" 2>/dev/null || true)"
+if [ -n "$resolved" ] && [ "$resolved" != "${INSTALL_DIR}/${BIN_NAME}" ]; then
+    printf '\n'
+    printf '\033[33mWarning:\033[0m another \047%s\047 comes first on your PATH:\n' "$BIN_NAME"
+    printf '    %s\n' "$resolved"
+    needs_path=1
+fi
+
+if [ "$needs_path" -eq 1 ]; then
+    if [ "${CU_NO_MODIFY_PATH:-0}" = "1" ]; then
+        printf '\n\033[33mNote:\033[0m %s is not first on your PATH.\n' "$INSTALL_DIR"
+        printf 'Add this to %s:\n\n' "$(rc_file)"
+        printf '    %s\n\n' "$(path_line "$INSTALL_DIR")"
+    else
+        configure_path
+    fi
+fi
+
+# --- Next steps ---
+printf '\nNext steps:\n'
+if [ -n "$RELOAD_FILE" ]; then
+    printf '  Restart your terminal, or run:  . %s\n' "$RELOAD_FILE"
+fi
+printf '  %s login           # authenticate (asks how, once)\n' "$BIN_NAME"
+printf '  %s --help          # see all commands\n' "$BIN_NAME"

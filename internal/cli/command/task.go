@@ -16,10 +16,10 @@ var taskCmd = &cobra.Command{
 	Use:   "task <task-id>",
 	Short: "Show task details",
 	Long: `Show detailed information about a specific task (assignment instance).
-Task IDs can be found via 'cu deadlines' or 'cu grades'.
+Task IDs can be found via 'cuni deadlines' or 'cuni grades'.
 
 Examples:
-  cu task 1536681`,
+  cuni task 1536681`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()

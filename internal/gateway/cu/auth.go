@@ -9,6 +9,8 @@ import (
 
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
+
+	"github.com/EgorTarasov/cu/internal/browser"
 )
 
 const tickerInterval = 500 * time.Millisecond
@@ -21,12 +23,7 @@ func LoginWithBrowser(ctx context.Context, timeout time.Duration) (string, error
 // LoginGitLabWithBrowser opens Chrome for GitLab SSO login and captures _gitlab_session cookie.
 // It waits until the user completes SSO and is redirected away from the sign-in page.
 func LoginGitLabWithBrowser(ctx context.Context, timeout time.Duration) (string, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("disable-gpu", false),
-	)
-
-	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
+	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, browser.AllocatorOptions()...)
 	defer allocCancel()
 
 	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)
@@ -78,12 +75,7 @@ func LoginGitLabWithBrowser(ctx context.Context, timeout time.Duration) (string,
 }
 
 func loginViaBrowser(ctx context.Context, timeout time.Duration, url, cookieName string) (string, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("disable-gpu", false),
-	)
-
-	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
+	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, browser.AllocatorOptions()...)
 	defer allocCancel()
 
 	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)

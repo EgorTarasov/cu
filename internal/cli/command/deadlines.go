@@ -16,10 +16,10 @@ var deadlinesCmd = &cobra.Command{
 Course can be specified by ID or by name (substring match).
 
 Examples:
-  cu deadlines              # all upcoming deadlines
-  cu deadlines go           # deadlines for the Go course
-  cu deadlines 901          # deadlines for course ID 901
-  cu deadlines алгоритмы    # deadlines matching "алгоритмы"`,
+  cuni deadlines              # all upcoming deadlines
+  cuni deadlines go           # deadlines for the Go course
+  cuni deadlines 901          # deadlines for course ID 901
+  cuni deadlines алгоритмы    # deadlines matching "алгоритмы"`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()

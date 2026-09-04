@@ -60,7 +60,7 @@ func NewClientFromEnv() (*Client, error) {
 		bffCookie = saved
 	}
 	if bffCookie == "" {
-		return nil, errors.New("no authentication found. Run 'cu login' or set CU_BFF_COOKIE")
+		return nil, errors.New("no authentication found. Run 'cuni login' or set CU_BFF_COOKIE")
 	}
 
 	return NewClient(bffCookie), nil
