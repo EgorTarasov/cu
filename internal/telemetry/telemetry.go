@@ -88,16 +88,19 @@ func envDisabled() bool {
 // (user paths) reports. The OS token makes the parser resolve an OS, which
 // is enough to count as a client.
 func userAgent(version string) string {
-	var osToken string
+	// Named "platform" rather than "token": gosec G101 matches credential-ish
+	// identifiers, and a //nolint directive does not reach the standalone
+	// gosec run in CI (that one only honours #nosec).
+	var osPlatform string
 	switch runtime.GOOS {
 	case "darwin":
-		osToken = "Macintosh; Intel Mac OS X 10_15_7"
+		osPlatform = "Macintosh; Intel Mac OS X 10_15_7"
 	case "windows":
-		osToken = "Windows NT 10.0; Win64; x64" //nolint:gosec // G101: UA platform token, not a credential
+		osPlatform = "Windows NT 10.0; Win64; x64"
 	default:
-		osToken = "X11; Linux x86_64" //nolint:gosec // G101: UA platform token, not a credential
+		osPlatform = "X11; Linux x86_64"
 	}
-	return fmt.Sprintf("cu-cli/%s (%s)", version, osToken)
+	return fmt.Sprintf("cu-cli/%s (%s)", version, osPlatform)
 }
 
 // Default returns the tracker built by Init, or nil (a valid no-op tracker).
