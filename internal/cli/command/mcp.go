@@ -1,9 +1,6 @@
 package command
 
 import (
-	"fmt"
-	"os"
-
 	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
 	mcpsrv "github.com/EgorTarasov/cu/internal/mcp"
 
@@ -32,8 +29,7 @@ Configure it in your MCP client (e.g. Claude Code) as:
 
 		srv := mcpsrv.NewServer(client, gitlab)
 		if err := srv.Run(cmd.Context()); err != nil {
-			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
-			os.Exit(1)
+			exitErrf("MCP server error: %v", err)
 		}
 	},
 }

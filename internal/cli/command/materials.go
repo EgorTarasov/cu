@@ -74,8 +74,7 @@ Examples:
 			BasePath:    basePath,
 		}, onEvent)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed: %v\n", err)
-			return
+			exitErrf("Failed to download materials: %v", err)
 		}
 
 		if !linksOnly {

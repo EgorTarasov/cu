@@ -96,6 +96,7 @@ func (uc *UseCase) Detailed(ctx context.Context, in model.GradesDetailedInput) (
 		}
 
 		tasks = append(tasks, model.TaskGrade{
+			TaskID:   t.ID,
 			Name:     name,
 			State:    model.TaskState(t.State),
 			Score:    t.Score,

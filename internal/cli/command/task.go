@@ -27,15 +27,13 @@ Examples:
 
 		taskID, err := strconv.Atoi(args[0])
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid task ID: %s\n", args[0])
-			os.Exit(1)
+			exitErrf("Invalid task ID %q: %v", args[0], err)
 		}
 
 		uc := task.New(client)
 		out, err := uc.Get(ctx, model.TaskGetInput{TaskID: taskID})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch task: %v\n", err)
-			os.Exit(1)
+			exitErrf("Failed to fetch task: %v", err)
 		}
 
 		fmt.Printf("Task: %s\n", out.ExerciseName)

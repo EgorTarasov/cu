@@ -12,7 +12,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
 	Run: func(_ *cobra.Command, _ []string) {
-		fmt.Printf("cu %s (commit: %s, built: %s)\n",
+		fmt.Printf("cuni %s (commit: %s, built: %s)\n",
 			version.Version, version.Commit, version.Date)
 	},
 }

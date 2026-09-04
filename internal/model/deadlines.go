@@ -77,6 +77,8 @@ type DeadlineItem struct {
 	StateLabel   string
 	Deadline     DeadLine
 	Reviewer     *Reviewer
+	// TaskID is the assignment-instance ID accepted by `cuni task` / get_task.
+	TaskID int
 }
 
 type DeadlinesListOutput struct {

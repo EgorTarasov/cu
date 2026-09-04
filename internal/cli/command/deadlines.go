@@ -33,8 +33,7 @@ Examples:
 		uc := deadlines.New(client)
 		result, err := uc.List(ctx, in)
 		if err != nil {
-			fmt.Printf("Failed to fetch deadlines: %v\n", err)
-			return
+			exitErrf("Failed to fetch deadlines: %v", err)
 		}
 
 		printDeadlines(result)
@@ -65,11 +64,12 @@ func printDeadlines(result *model.DeadlinesListOutput) {
 			// no marker
 		}
 
-		fmt.Printf(" %s %-12s  %-8s  %s  %s\n",
+		fmt.Printf(" %s %-12s  %-8s  %s  #%-9d %s\n",
 			marker,
 			dl.StateLabel,
 			dl.Deadline.TimeLeft(),
 			dl.Deadline.Format(model.DateTimeShortFormat),
+			dl.TaskID,
 			dl.ExerciseName,
 		)
 
@@ -84,4 +84,5 @@ func printDeadlines(result *model.DeadlinesListOutput) {
 
 	fmt.Printf("\n%d deadline(s) total\n", len(result.Items))
 	fmt.Println("  ! = overdue or <24h  * = <3 days")
+	fmt.Println("  cuni task <id> for details")
 }
