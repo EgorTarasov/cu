@@ -17,6 +17,14 @@ ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; pass=$((pass + 1)); }
 bad()  { printf '  \033[31m✗\033[0m %s\n' "$1"; fail=$((fail + 1)); }
 head_() { printf '\n\033[36m%s\033[0m\n' "$1"; }
 
+# path_lookup <PATH> <name> — resolve <name> under a specific PATH.
+# `command` is a shell builtin; macOS also ships /usr/bin/command but Linux
+# does not, so `env PATH=... command -v` dies with 127 there. Going through
+# sh -c keeps the builtin available on both.
+path_lookup() {
+    env PATH="$1" sh -c 'command -v "$1"' sh "$2" 2>/dev/null || true
+}
+
 case "$(uname -s)" in
     Darwin) os="Darwin" ;;
     Linux)  os="Linux"  ;;
@@ -103,13 +111,13 @@ else bad "--version failed"; fi
 
 # The whole point of the rename: nothing in the base system may own this name.
 head_ "Name is free on a stock system PATH"
-shadow="$(env PATH="/usr/bin:/bin:/usr/sbin:/sbin" command -v "$BIN_NAME" 2>/dev/null || true)"
+shadow="$(path_lookup "/usr/bin:/bin:/usr/sbin:/sbin" "$BIN_NAME")"
 if [ -z "$shadow" ]; then ok "no system binary named '$BIN_NAME'"
 else bad "system binary shadows the install: $shadow"; fi
 
 # Regression guard: `cu` collided with /usr/bin/cu (UUCP) on every macOS.
 if [ "$os" = "Darwin" ]; then
-    legacy="$(env PATH="/usr/bin:/bin:/usr/sbin:/sbin" command -v cu 2>/dev/null || true)"
+    legacy="$(path_lookup "/usr/bin:/bin:/usr/sbin:/sbin" cu)"
     if [ -n "$legacy" ]; then ok "confirmed why 'cu' was unusable: $legacy"
     else printf '  \033[33m!\033[0m /usr/bin/cu absent on this host (unexpected on macOS)\n'; fi
 fi
@@ -166,7 +174,7 @@ else bad "rc file written despite CU_NO_MODIFY_PATH=1"; fi
 if grep -q 'export PATH=' "$workdir/optout.log"; then ok "printed the PATH line instead"
 else bad "opt-out did not print the manual PATH line"; fi
 
-resolved="$(env PATH="${install_dir}:/usr/bin:/bin" command -v "$BIN_NAME")"
+resolved="$(path_lookup "${install_dir}:/usr/bin:/bin" "$BIN_NAME")"
 if [ "$resolved" = "$install_dir/$BIN_NAME" ]; then ok "resolves to the installed binary"
 else bad "resolved to $resolved"; fi
 
