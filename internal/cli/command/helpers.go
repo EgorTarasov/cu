@@ -14,6 +14,7 @@ func mustClient() *cu.Client {
 		cookieRequiredError(err)
 	}
 	if err = client.ValidateCookie(); err != nil {
+		reportCommandFailure("auth")
 		fmt.Fprintf(os.Stderr, "Cookie expired: %v\nRun: cuni login\n", err)
 		os.Exit(1)
 	}

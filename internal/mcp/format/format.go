@@ -106,8 +106,8 @@ func Deadlines(result *model.DeadlinesListOutput) string {
 		return b.String()
 	}
 
-	b.WriteString("| Urgency | Status | Time Left | Deadline | Exercise | Course |\n")
-	b.WriteString("|---------|--------|-----------|----------|----------|--------|\n")
+	b.WriteString("| Task ID | Urgency | Status | Time Left | Deadline | Exercise | Course |\n")
+	b.WriteString("|---------|---------|--------|-----------|----------|----------|--------|\n")
 
 	urgent, soon := 0, 0
 
@@ -125,8 +125,8 @@ func Deadlines(result *model.DeadlinesListOutput) string {
 			// default
 		}
 
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n",
-			icon, dl.StateLabel, dl.Deadline.TimeLeft(),
+		fmt.Fprintf(&b, "| %d | %s | %s | %s | %s | %s | %s |\n",
+			dl.TaskID, icon, dl.StateLabel, dl.Deadline.TimeLeft(),
 			dl.Deadline.Format(model.DateTimeShortFormat),
 			dl.ExerciseName, dl.CourseName,
 		)
@@ -183,16 +183,16 @@ func GradesDetailed(result *model.GradesDetailedOutput) string {
 	fmt.Fprintf(&b, "\n**Total score: %.1f**\n\n", result.TotalScore)
 
 	b.WriteString("### Tasks\n\n")
-	b.WriteString("| Status | Score | Exercise |\n")
-	b.WriteString("|--------|-------|----------|\n")
+	b.WriteString("| Task ID | Status | Score | Exercise |\n")
+	b.WriteString("|---------|--------|-------|----------|\n")
 
 	for _, t := range result.Tasks {
 		score := "-"
 		if t.Score != nil {
 			score = fmt.Sprintf("%.0f", *t.Score)
 		}
-		fmt.Fprintf(&b, "| %s | %s/%d | %s |\n",
-			t.State.Label(), score, t.MaxScore, t.Name)
+		fmt.Fprintf(&b, "| %d | %s | %s/%d | %s |\n",
+			t.TaskID, t.State.Label(), score, t.MaxScore, t.Name)
 	}
 
 	if len(result.Blockers) > 0 {

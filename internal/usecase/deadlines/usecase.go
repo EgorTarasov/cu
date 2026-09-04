@@ -44,6 +44,7 @@ func (uc *UseCase) List(ctx context.Context, in model.DeadlinesListInput) (*mode
 
 	for _, dl := range deadlines {
 		item := model.DeadlineItem{
+			TaskID:       dl.ID,
 			ExerciseName: dl.Exercise.Name,
 			CourseName:   dl.Course.Name,
 			State:        model.TaskState(dl.State),

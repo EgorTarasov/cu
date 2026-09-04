@@ -19,8 +19,7 @@ var coursesCmd = &cobra.Command{
 		uc := courses.New(client)
 		result, err := uc.List(ctx)
 		if err != nil {
-			fmt.Printf("Failed to fetch courses: %v\n", err)
-			return
+			exitErrf("Failed to fetch courses: %v", err)
 		}
 
 		fmt.Printf("Active (%d)\n\n", len(result.Active))

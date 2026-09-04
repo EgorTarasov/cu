@@ -30,6 +30,8 @@ type TaskGrade struct {
 	State    TaskState
 	Score    *float64
 	MaxScore int
+	// TaskID is the assignment-instance ID accepted by `cuni task` / get_task.
+	TaskID int
 }
 
 type BlockerInfo struct {

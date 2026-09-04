@@ -62,7 +62,7 @@ func resolveLoginMethod(forceManual, forceBrowser, rerunSetup bool) settings.Log
 		fmt.Fprintf(os.Stderr, "Не удалось сохранить выбор: %v\n", err)
 	} else {
 		path, _ := settings.FilePath()
-		fmt.Printf("Выбор сохранён в %s (изменить: cu login --setup)\n\n", path)
+		fmt.Printf("Выбор сохранён в %s (изменить: cuni login --setup)\n\n", path)
 	}
 	return chosen
 }
@@ -149,12 +149,12 @@ func ensureChrome(ctx context.Context) error {
 
 	if !isInteractive() {
 		return errors.New("не найден Google Chrome. Установите Chrome, задайте CHROME_PATH " +
-			"или используйте ручной способ: cu login --manual")
+			"или используйте ручной способ: cuni login --manual")
 	}
 
 	fmt.Println("Google Chrome не найден.")
 	fmt.Println()
-	fmt.Println("cu может скачать Chrome for Testing (~170 МБ) в ~/.cu-cli/chrome.")
+	fmt.Println("cuni может скачать Chrome for Testing (~170 МБ) в ~/.cu-cli/chrome.")
 	fmt.Println("Он используется только для входа и не трогает ваш обычный браузер.")
 	fmt.Println()
 	fmt.Print("Скачать? [y/N]: ")
@@ -164,7 +164,7 @@ func ensureChrome(ctx context.Context) error {
 	case "y", "yes", "д", "да":
 	default:
 		return errors.New("нужен Chrome. Установите его, задайте CHROME_PATH " +
-			"или используйте: cu login --manual")
+			"или используйте: cuni login --manual")
 	}
 
 	path, err := browser.Download(ctx, os.Stdout)

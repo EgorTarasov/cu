@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/EgorTarasov/cu/internal/cli/format"
 
@@ -36,8 +35,7 @@ Examples:
 		if len(args) == 0 {
 			result, err := uc.Summary(ctx, model.GradesSummaryInput{})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
-				return
+				exitErrf("Failed to fetch grades: %v", err)
 			}
 			printSummary(result)
 			return
@@ -45,8 +43,7 @@ Examples:
 
 		result, err := uc.Detailed(ctx, model.GradesDetailedInput{CourseQuery: args[0]})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to fetch grades: %v\n", err)
-			return
+			exitErrf("Failed to fetch grades: %v", err)
 		}
 		printDetailed(result)
 	},
@@ -100,10 +97,10 @@ func printDetailed(result *model.GradesDetailedOutput) {
 		if t.Score != nil {
 			score = fmt.Sprintf("%3.0f", *t.Score)
 		}
-		fmt.Printf("  %-12s  %s/%d  %s\n",
+		fmt.Printf("  %-12s  %-8s  #%-9d %s\n",
 			t.State.Label(),
-			score,
-			t.MaxScore,
+			fmt.Sprintf("%s/%d", score, t.MaxScore),
+			t.TaskID,
 			t.Name,
 		)
 	}
@@ -114,4 +111,6 @@ func printDetailed(result *model.GradesDetailedOutput) {
 			fmt.Printf("  %s (need avg >= %.0f)\n", b.ActivityName, b.Threshold)
 		}
 	}
+
+	fmt.Println("\n  cuni task <id> for details")
 }

@@ -17,19 +17,23 @@ cuni deadlines алгоритмы    # по названию
 $ cuni deadlines
 All upcoming deadlines
 
- ! TODO          3h 47m    21 Apr 20:59  ДЗ 5. Неделя 9. «Kubernetes 1»
+ ! TODO          3h 47m    21 Apr 20:59  #1536102   ДЗ 5. Неделя 9. «Kubernetes 1»
    Промышленная разработка. Магистратура
- * IN PROGRESS   1d 3h     22 Apr 20:59  ДЗ 5. Неделя 10.
+ * IN PROGRESS   1d 3h     22 Apr 20:59  #1536455   ДЗ 5. Неделя 10.
    SQL и базы данных (для разработчиков)
- * IN PROGRESS   2d 1h     23 Apr 19:00  ДЗ 3. Неделя 8.
+ * IN PROGRESS   2d 1h     23 Apr 19:00  #1536681   ДЗ 3. Неделя 8.
    Разработка на языке программирования Go
    reviewer: Владислав Ханнанов
- * TODO          2d 3h     23 Apr 20:59  ДЗ 4. Неделя 10.
+ * TODO          2d 3h     23 Apr 20:59  #1536744   ДЗ 4. Неделя 10.
    Разработка на языке программирования Go
 
 15 deadline(s) total
   ! = overdue or <24h  * = <3 days
+  cuni task <id> for details
 ```
+
+Число после `#` — ID задачи; передайте его в `cuni task <id>`, чтобы увидеть
+ревьюера, ссылку на решение и баланс late days.
 
 ## Пример — по курсу
 
@@ -37,9 +41,11 @@ All upcoming deadlines
 $ cuni deadlines sql
 Deadlines: SQL и базы данных (для разработчиков)
 
- * IN PROGRESS   1d 3h     22 Apr 20:59  ДЗ 5. Неделя 10.
+ * IN PROGRESS   1d 3h     22 Apr 20:59  #1536455   ДЗ 5. Неделя 10.
 
 1 deadline(s) total
+  ! = overdue or <24h  * = <3 days
+  cuni task <id> for details
 ```
 
 ## Обозначения
