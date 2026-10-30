@@ -49,10 +49,10 @@ checksum:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
-# Release notes come from CHANGELOG.md via --release-notes flag in the workflow.
-# Disable the auto-generated commit-based changelog so we don't duplicate.
-changelog:
-  disable: true
+# Release notes come from CHANGELOG.md via --release-notes in the workflow; that
+# flag replaces the commit-based changelog. Do not set changelog.disable: it
+# skips the whole changelog pipe, including --release-notes, and the release
+# body ends up empty.
 
 release:
   github:
