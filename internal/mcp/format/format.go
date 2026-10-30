@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/EgorTarasov/cu/internal/gateway/cu"
 	"github.com/EgorTarasov/cu/internal/model"
@@ -346,4 +347,146 @@ func LongreadSummary(longread *cu.Longread) string {
 	render.MDTimeLine(&b, "Published at", longread.PublishedAt)
 
 	return b.String()
+}
+
+const (
+	timeChatStamp      = "Mon 02 Jan 15:04"
+	timeChatSnippetCap = 1200
+)
+
+func TimeChannels(chs []model.TimeChannel) string {
+	var b strings.Builder
+	b.WriteString("## time.cu.ru channels\n\n")
+	if len(chs) == 0 {
+		b.WriteString("No channels match.\n")
+		return b.String()
+	}
+	b.WriteString("| Channel | Kind | Unread | Mentions | Last message | Channel ID |\n")
+	b.WriteString("|---------|------|--------|----------|--------------|------------|\n")
+	for _, ch := range chs {
+		title := ch.Title
+		if ch.Muted {
+			title += " (muted)"
+		}
+		fmt.Fprintf(&b, "| %s | %s | %d | %d | %s | %s |\n",
+			tableCell(title), ch.Kind, ch.Unread, ch.Mentions, stamp(ch.LastPostAt), ch.ID)
+	}
+	fmt.Fprintf(&b, "\n%d channels.\n", len(chs))
+	return b.String()
+}
+
+func TimeChannelPosts(p *model.TimeChannelPosts) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "## %s (%s)\n\n", p.Channel.Title, p.Channel.Kind)
+	if p.Since != nil {
+		fmt.Fprintf(&b, "Messages after %s", p.Since.Format(timeChatStamp))
+	} else {
+		b.WriteString("Latest messages")
+	}
+	if p.Total > len(p.Messages) {
+		fmt.Fprintf(&b, ": showing the last %d of %d", len(p.Messages), p.Total)
+	}
+	b.WriteString(".\n\n")
+	writeTimeMessages(&b, p.Messages, false, 0)
+	return b.String()
+}
+
+func TimeThread(p *model.TimeChannelPosts) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "## Thread in %s\n\n", p.Channel.Title)
+	writeTimeMessages(&b, p.Messages, false, 0)
+	return b.String()
+}
+
+func TimeSearch(out *model.TimeSearchOutput) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "## Search: %s\n\n", out.Terms)
+	writeTimeMessages(&b, out.Messages, true, timeChatSnippetCap)
+	return b.String()
+}
+
+func TimeUpdates(out *model.TimeUpdatesOutput) string {
+	var b strings.Builder
+	if out.Since != nil {
+		fmt.Fprintf(&b, "## time.cu.ru: messages after %s\n\n", out.Since.Format(timeChatStamp))
+	} else {
+		b.WriteString("## time.cu.ru: unread\n\n")
+	}
+	if len(out.Channels) == 0 {
+		b.WriteString("Nothing new.\n")
+	}
+	for i := range out.Channels {
+		p := &out.Channels[i]
+		fmt.Fprintf(&b, "### %s (%s) — %d new", p.Channel.Title, p.Channel.Kind, p.Total)
+		if p.Channel.Mentions > 0 {
+			fmt.Fprintf(&b, ", %d mentions", p.Channel.Mentions)
+		}
+		fmt.Fprintf(&b, "\nchannel_id: %s", p.Channel.ID)
+		if p.Total > len(p.Messages) {
+			fmt.Fprintf(&b, "; showing the last %d", len(p.Messages))
+		}
+		b.WriteString("\n\n")
+		writeTimeMessages(&b, p.Messages, false, timeChatSnippetCap)
+	}
+	if len(out.Skipped) > 0 {
+		b.WriteString("\nMuted channels with activity (not read): ")
+		names := make([]string, 0, len(out.Skipped))
+		for _, ch := range out.Skipped {
+			names = append(names, fmt.Sprintf("%s (%d unread)", ch.Title, ch.Unread))
+		}
+		b.WriteString(strings.Join(names, ", "))
+		b.WriteString(".\n")
+	}
+	return b.String()
+}
+
+func writeTimeMessages(b *strings.Builder, msgs []model.TimeMessage, withChannel bool, textCap int) {
+	if len(msgs) == 0 {
+		b.WriteString("No messages.\n")
+		return
+	}
+	for _, m := range msgs {
+		author := m.Author
+		if m.FromMe {
+			author += " [you]"
+		}
+		fmt.Fprintf(b, "- **%s** · %s", author, m.At.Format(timeChatStamp))
+		if withChannel && m.ChannelTitle != "" {
+			fmt.Fprintf(b, " · in %s", m.ChannelTitle)
+		}
+		fmt.Fprintf(b, " · post_id %s", m.ID)
+		switch {
+		case m.RootID != "":
+			fmt.Fprintf(b, " · reply in thread %s", m.RootID)
+		case m.Replies > 0:
+			fmt.Fprintf(b, " · %d replies", m.Replies)
+		}
+		if m.Files > 0 {
+			fmt.Fprintf(b, " · %d files", m.Files)
+		}
+		b.WriteString("\n")
+		text := strings.TrimSpace(m.Text)
+		if textCap > 0 {
+			if r := []rune(text); len(r) > textCap {
+				text = string(r[:textCap]) + "…"
+			}
+		}
+		if text == "" {
+			continue
+		}
+		for line := range strings.SplitSeq(text, "\n") {
+			fmt.Fprintf(b, "  > %s\n", line)
+		}
+	}
+}
+
+func stamp(t time.Time) string {
+	if t.IsZero() {
+		return "—"
+	}
+	return t.Format(timeChatStamp)
+}
+
+func tableCell(s string) string {
+	return strings.ReplaceAll(s, "|", "\\|")
 }
