@@ -10,11 +10,18 @@ import (
 	"github.com/EgorTarasov/cu/internal/mcp/tool/coursestructure"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/coursesummary"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/downloadmaterials"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/listtimechannels"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/longreadsummary"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/readmaterial"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/readtimechannel"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/readtimethread"
 	searchCourses "github.com/EgorTarasov/cu/internal/mcp/tool/searchcourses"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/searchtimeposts"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/studentprofile"
 	"github.com/EgorTarasov/cu/internal/mcp/tool/themesummary"
+	"github.com/EgorTarasov/cu/internal/mcp/tool/timeunread"
+	"github.com/EgorTarasov/cu/internal/model"
+	"github.com/EgorTarasov/cu/internal/usecase/timechat"
 	"github.com/EgorTarasov/cu/internal/version"
 
 	"github.com/EgorTarasov/cu/internal/gateway/cu"
@@ -46,6 +53,15 @@ type LMSClient interface {
 	DownloadFile(ctx context.Context, material cu.Material, destDir string) (string, error)
 }
 
+// TimeChat reads time.cu.ru; it has no sending or read-marking methods by design.
+type TimeChat interface {
+	ListChannels(ctx context.Context, f timechat.ChannelsFilter) ([]model.TimeChannel, error)
+	ChannelPosts(ctx context.Context, query string, since *time.Time, limit int) (*model.TimeChannelPosts, error)
+	Thread(ctx context.Context, postID string) (*model.TimeChannelPosts, error)
+	Search(ctx context.Context, terms string, limit int) (*model.TimeSearchOutput, error)
+	Updates(ctx context.Context, in model.TimeUpdatesInput) (*model.TimeUpdatesOutput, error)
+}
+
 type GitLabClient interface {
 	GetRawFile(ctx context.Context, project, ref, filePath string) ([]byte, error)
 	DownloadGitLabLink(ctx context.Context, link, destDir string) ([]string, error)
@@ -54,6 +70,7 @@ type GitLabClient interface {
 type Server struct {
 	lms    LMSClient
 	gitlab GitLabClient
+	chat   TimeChat
 	srv    *mcp.Server
 
 	// telemetry state for the current stdio session
@@ -63,10 +80,11 @@ type Server struct {
 	lastToolCallMS atomic.Int64
 }
 
-func NewServer(lms LMSClient, gitlab GitLabClient) *Server {
+func NewServer(lms LMSClient, gitlab GitLabClient, chat TimeChat) *Server {
 	s := &Server{
 		lms:       lms,
 		gitlab:    gitlab,
+		chat:      chat,
 		sessionID: telemetry.NewSessionID(),
 	}
 
@@ -106,4 +124,9 @@ func (s *Server) registerTools() {
 	mcp.AddTool(s.srv, materials.Definition, materials.NewHandler(s.lms))
 	mcp.AddTool(s.srv, readmaterial.Definition, readmaterial.NewHandler(s.lms, s.gitlab))
 	mcp.AddTool(s.srv, downloadmaterials.Definition, downloadmaterials.NewHandler(s.lms, s.gitlab))
+	mcp.AddTool(s.srv, listtimechannels.Definition, listtimechannels.NewHandler(s.chat))
+	mcp.AddTool(s.srv, timeunread.Definition, timeunread.NewHandler(s.chat))
+	mcp.AddTool(s.srv, readtimechannel.Definition, readtimechannel.NewHandler(s.chat))
+	mcp.AddTool(s.srv, readtimethread.Definition, readtimethread.NewHandler(s.chat))
+	mcp.AddTool(s.srv, searchtimeposts.Definition, searchtimeposts.NewHandler(s.chat))
 }

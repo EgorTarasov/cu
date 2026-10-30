@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -41,6 +42,34 @@ func (c *Client) GetUserChannelsForTeam(ctx context.Context, userID, teamID stri
 // GetUserByUsername resolves a user by their username (without leading '@').
 func (c *Client) GetUserByUsername(ctx context.Context, username string) (*User, error) {
 	return doJSON[User](ctx, c, fmt.Sprintf(UserByUsernameEndpoint, url.PathEscape(username)))
+}
+
+// GetUser resolves a user by ID.
+func (c *Client) GetUser(ctx context.Context, userID string) (*User, error) {
+	return doJSON[User](ctx, c, fmt.Sprintf(UserEndpoint, url.PathEscape(userID)))
+}
+
+// GetChannelMembersForUser returns the user's read state for every channel of the team,
+// direct and group messages included.
+func (c *Client) GetChannelMembersForUser(ctx context.Context, userID, teamID string) ([]ChannelMember, error) {
+	out, err := doJSON[[]ChannelMember](ctx, c, fmt.Sprintf(UserChannelMembersEndpoint,
+		url.PathEscape(userID), url.PathEscape(teamID)))
+	if err != nil {
+		return nil, err
+	}
+	return *out, nil
+}
+
+// GetPostThread returns the root post and all replies of the thread containing postID.
+func (c *Client) GetPostThread(ctx context.Context, postID string) (*PostList, error) {
+	return doJSON[PostList](ctx, c, fmt.Sprintf(PostThreadEndpoint, url.PathEscape(postID)))
+}
+
+// SearchTeamPosts runs a read-only message search in the team.
+// It is a POST only because Mattermost takes the query as a JSON body.
+func (c *Client) SearchTeamPosts(ctx context.Context, teamID string, req SearchRequest) (*PostList, error) {
+	return doJSONRequest[PostList](ctx, c, http.MethodPost,
+		fmt.Sprintf(TeamPostsSearchEndpoint, url.PathEscape(teamID)), req)
 }
 
 // PostsQuery controls /channels/{id}/posts paging.

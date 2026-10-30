@@ -2,7 +2,9 @@ package command
 
 import (
 	cuGw "github.com/EgorTarasov/cu/internal/gateway/cu"
+	tcli "github.com/EgorTarasov/cu/internal/gateway/timeclient"
 	mcpsrv "github.com/EgorTarasov/cu/internal/mcp"
+	"github.com/EgorTarasov/cu/internal/usecase/timechat"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +29,11 @@ Configure it in your MCP client (e.g. Claude Code) as:
 			gitlab = gc
 		}
 
-		srv := mcpsrv.NewServer(client, gitlab)
+		chat := timechat.New(func() (timechat.Client, error) {
+			return tcli.NewClientFromEnv()
+		}, tcli.LoadConfig().TeamName)
+
+		srv := mcpsrv.NewServer(client, gitlab, chat)
 		if err := srv.Run(cmd.Context()); err != nil {
 			exitErrf("MCP server error: %v", err)
 		}

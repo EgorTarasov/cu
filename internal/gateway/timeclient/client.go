@@ -1,7 +1,6 @@
 package timeclient
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,14 +9,23 @@ import (
 
 const (
 	APIPrefix      = "/api/v4"
-	DefaultTimeout = 30 * time.Second
+	DefaultTimeout = 60 * time.Second
 
-	MeEndpoint             = APIPrefix + "/users/me"
-	MyTeamsEndpoint        = APIPrefix + "/users/me/teams"
-	TeamByNameEndpoint     = APIPrefix + "/teams/name/%s"
-	UserChannelsEndpoint   = APIPrefix + "/users/%s/teams/%s/channels"
-	UserByUsernameEndpoint = APIPrefix + "/users/username/%s"
-	ChannelPostsEndpoint   = APIPrefix + "/channels/%s/posts"
+	// time.cu.ru sometimes takes ~10s to finish a TLS handshake, which is
+	// exactly Go's default limit.
+	tlsHandshakeTimeout = 25 * time.Second
+	maxConnsPerHost     = 16
+
+	MeEndpoint                 = APIPrefix + "/users/me"
+	MyTeamsEndpoint            = APIPrefix + "/users/me/teams"
+	TeamByNameEndpoint         = APIPrefix + "/teams/name/%s"
+	UserChannelsEndpoint       = APIPrefix + "/users/%s/teams/%s/channels"
+	UserByUsernameEndpoint     = APIPrefix + "/users/username/%s"
+	ChannelPostsEndpoint       = APIPrefix + "/channels/%s/posts"
+	UserEndpoint               = APIPrefix + "/users/%s"
+	UserChannelMembersEndpoint = APIPrefix + "/users/%s/teams/%s/channels/members"
+	PostThreadEndpoint         = APIPrefix + "/posts/%s/thread"
+	TeamPostsSearchEndpoint    = APIPrefix + "/teams/%s/posts/search"
 )
 
 type Client struct {
@@ -33,11 +41,21 @@ func NewClient(token string) *Client {
 
 func NewClientWithBase(token, baseURL string) *Client {
 	return &Client{
-		httpClient: &http.Client{Timeout: DefaultTimeout},
+		httpClient: &http.Client{Timeout: DefaultTimeout, Transport: newTransport()},
 		baseURL:    baseURL,
 		token:      token,
 		userAgent:  "cu-cli/mm",
 	}
+}
+
+func newTransport() *http.Transport {
+	t := &http.Transport{Proxy: http.ProxyFromEnvironment}
+	if def, ok := http.DefaultTransport.(*http.Transport); ok {
+		t = def.Clone()
+	}
+	t.TLSHandshakeTimeout = tlsHandshakeTimeout
+	t.MaxIdleConnsPerHost = maxConnsPerHost
+	return t
 }
 
 // NewClientFromEnv loads a token from CU_MM_TOKEN or the saved cookie file
@@ -53,7 +71,7 @@ func NewClientFromEnv() (*Client, error) {
 		token = saved
 	}
 	if token == "" {
-		return nil, errors.New("no Mattermost auth found. Run 'cuni login --mattermost' or set CU_MM_TOKEN")
+		return nil, fmt.Errorf("%w: run 'cu login --time' or set CU_MM_TOKEN", ErrNoToken)
 	}
 	return NewClientWithBase(token, cfg.BaseURL), nil
 }

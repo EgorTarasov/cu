@@ -151,6 +151,18 @@ export CU_BFF_COOKIE="ваше-значение-cookie"
 - `cuni fetch theme <theme-id>` — краткая информация о теме
 - `cuni fetch longread <longread-id>` — краткая информация о лонгриде
 
+### Чтение time.cu.ru через MCP
+
+MCP-сервер (`cuni mcp`) читает чат time.cu.ru: каналы курсов, личные и групповые
+сообщения. Нужен вход `cuni login --time`. Тулы только читают — ничего не
+отправляют и не отмечают прочитанным:
+
+- `list_time_channels` — каналы и ЛС с числом непрочитанных и упоминаний;
+- `get_time_unread` — новое по всем каналам за раз (непрочитанное или всё после `since`);
+- `read_time_channel` — сообщения одного канала или ЛС;
+- `read_time_thread` — тред целиком;
+- `search_time_posts` — поиск (`from:`, `in:`, `after:`, `"фраза"`, `@username`).
+
 ### Обновление MCP-сервера
 
 После `make install` запущенные хосты (Claude Code, IDE) продолжают держать
